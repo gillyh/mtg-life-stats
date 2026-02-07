@@ -1,0 +1,1759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>MTG Life Counter</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0e1a;
+            --bg-secondary: #1a1f2e;
+            --bg-accent: #2a2f3e;
+            --text-primary: #e8d5b7;
+            --text-secondary: #c4a57b;
+            --accent-gold: #d4af37;
+            --accent-red: #8b0000;
+            --accent-green: #2d5016;
+            --shadow-dark: rgba(0, 0, 0, 0.6);
+            --glow-gold: rgba(212, 175, 55, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Crimson Pro', serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(212, 175, 55, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(139, 0, 0, 0.05) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            text-align: center;
+            padding: 20px 0;
+            animation: fadeInDown 0.6s ease-out;
+        }
+
+        h1 {
+            font-family: 'Cinzel', serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--accent-gold);
+            text-shadow: 0 0 20px var(--glow-gold), 0 2px 4px var(--shadow-dark);
+            letter-spacing: 2px;
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+
+        .view-toggle {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin: 20px 0;
+            animation: fadeIn 0.8s ease-out 0.2s both;
+            flex-wrap: wrap;
+        }
+
+        .view-toggle button {
+            font-family: 'Crimson Pro', serif;
+            padding: 12px 20px;
+            background: var(--bg-accent);
+            border: 1px solid var(--accent-gold);
+            color: var(--text-primary);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+        }
+
+        .view-toggle button.active {
+            background: var(--accent-gold);
+            color: var(--bg-primary);
+            box-shadow: 0 0 20px var(--glow-gold);
+        }
+
+        .view-toggle button:hover:not(.active) {
+            background: var(--bg-secondary);
+            transform: translateY(-2px);
+        }
+
+        .life-counter-view {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            animation: fadeIn 0.8s ease-out 0.4s both;
+        }
+
+        .player-count-selector {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .player-count-btn {
+            font-family: 'Crimson Pro', serif;
+            padding: 10px 20px;
+            background: var(--bg-accent);
+            border: 2px solid var(--text-secondary);
+            color: var(--text-primary);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .player-count-btn.active {
+            background: var(--accent-gold);
+            color: var(--bg-primary);
+            border-color: var(--accent-gold);
+        }
+
+        .player-count-btn:hover:not(.active) {
+            background: var(--bg-secondary);
+            border-color: var(--accent-gold);
+        }
+
+        .players-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* Grid layout for 3-4 players */
+        .players-container.grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 30px;
+            min-height: 550px;
+            padding: 30px 10px;
+        }
+
+        .player-card {
+            background: linear-gradient(145deg, var(--bg-secondary), var(--bg-accent));
+            border: 2px solid var(--accent-gold);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 8px 32px var(--shadow-dark);
+            animation: slideInUp 0.6s ease-out;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Smaller padding for grid layout */
+        .players-container.grid .player-card {
+            padding: 10px;
+        }
+
+        .players-container.grid .player-header {
+            margin-bottom: 8px;
+        }
+
+        .players-container.grid .player-name {
+            font-size: 1rem;
+        }
+
+        .players-container.grid .reset-player {
+            padding: 4px 8px;
+            font-size: 0.75rem;
+        }
+
+        .player-card:nth-child(2) {
+            animation-delay: 0.1s;
+        }
+
+        .player-card:nth-child(3) {
+            animation-delay: 0.2s;
+        }
+
+        .player-card:nth-child(4) {
+            animation-delay: 0.3s;
+        }
+
+        .player-card.blank {
+            background: transparent;
+            border: 2px dashed var(--text-secondary);
+            opacity: 0.3;
+        }
+
+        /* Rotation classes */
+        .player-card.rotate-90 {
+            transform: rotate(90deg);
+        }
+
+        .player-card.rotate-180 {
+            transform: rotate(180deg);
+        }
+
+        .player-card.rotate-270 {
+            transform: rotate(-90deg);
+        }
+
+        .player-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .player-name {
+            font-family: 'Cinzel', serif;
+            font-size: 1.2rem;
+            color: var(--accent-gold);
+            font-weight: 600;
+        }
+
+        .reset-player {
+            background: var(--accent-red);
+            border: none;
+            color: var(--text-primary);
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+        }
+
+        .reset-player:hover {
+            background: #a00000;
+            transform: scale(1.05);
+        }
+
+        .life-display {
+            text-align: center;
+            font-size: 4rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            text-shadow: 0 4px 8px var(--shadow-dark);
+            margin: 20px 0;
+            font-family: 'Cinzel', serif;
+            user-select: none;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Smaller life display for 3-4 players */
+        .players-container.grid .life-display {
+            font-size: 3rem;
+            margin: 10px 0;
+        }
+
+        .life-controls {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        .additional-counters {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid var(--text-secondary);
+        }
+
+        .players-container.grid .additional-counters {
+            margin-top: 8px;
+            padding-top: 8px;
+        }
+
+        .counter-row {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+
+        .players-container.grid .counter-row {
+            font-size: 0.75rem;
+            margin-bottom: 3px;
+        }
+
+        .counter-label {
+            flex: 1;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .players-container.grid .counter-label {
+            font-size: 0.7rem;
+        }
+
+        .counter-value {
+            font-family: 'Cinzel', serif;
+            font-weight: 600;
+            color: var(--accent-gold);
+            min-width: 30px;
+            text-align: center;
+        }
+
+        .counter-btn {
+            background: var(--bg-primary);
+            border: 1px solid var(--text-secondary);
+            color: var(--text-primary);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 600;
+        }
+
+        .players-container.grid .counter-btn {
+            padding: 2px 4px;
+            font-size: 0.7rem;
+        }
+
+        .counter-btn:hover {
+            background: var(--text-secondary);
+            color: var(--bg-primary);
+        }
+
+        .add-counter-btn {
+            width: 100%;
+            padding: 6px;
+            background: var(--bg-primary);
+            border: 1px solid var(--accent-gold);
+            color: var(--accent-gold);
+            border-radius: 6px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 5px;
+            font-family: 'Crimson Pro', serif;
+        }
+
+        .players-container.grid .add-counter-btn {
+            padding: 4px;
+            font-size: 0.65rem;
+        }
+
+        .add-counter-btn:hover {
+            background: var(--accent-gold);
+            color: var(--bg-primary);
+        }
+
+        .life-btn {
+            background: var(--bg-accent);
+            border: 2px solid var(--text-secondary);
+            color: var(--text-primary);
+            padding: 20px;
+            border-radius: 12px;
+            font-size: 1.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'Cinzel', serif;
+            user-select: none;
+            touch-action: manipulation;
+        }
+
+        /* Smaller buttons for 3-4 players */
+        .players-container.grid .life-btn {
+            padding: 12px;
+            font-size: 1.1rem;
+        }
+
+        .life-btn:active {
+            transform: scale(0.95);
+        }
+
+        .life-btn.increment {
+            background: linear-gradient(145deg, var(--accent-green), #3d6620);
+            border-color: #4d7630;
+        }
+
+        .life-btn.increment:hover {
+            box-shadow: 0 0 20px rgba(45, 80, 22, 0.5);
+        }
+
+        .life-btn.decrement {
+            background: linear-gradient(145deg, var(--accent-red), #a00000);
+            border-color: #b00000;
+        }
+
+        .life-btn.decrement:hover {
+            box-shadow: 0 0 20px rgba(139, 0, 0, 0.5);
+        }
+
+        .game-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .game-btn {
+            flex: 1;
+            padding: 16px;
+            background: var(--bg-accent);
+            border: 2px solid var(--accent-gold);
+            color: var(--text-primary);
+            border-radius: 12px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            font-family: 'Cinzel', serif;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .game-btn:hover {
+            background: var(--accent-gold);
+            color: var(--bg-primary);
+            box-shadow: 0 0 20px var(--glow-gold);
+        }
+
+        .stats-view {
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        .stats-summary {
+            background: linear-gradient(145deg, var(--bg-secondary), var(--bg-accent));
+            border: 2px solid var(--accent-gold);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px var(--shadow-dark);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-family: 'Cinzel', serif;
+            font-weight: 700;
+            color: var(--accent-gold);
+            text-shadow: 0 2px 4px var(--shadow-dark);
+        }
+
+        .game-history {
+            background: linear-gradient(145deg, var(--bg-secondary), var(--bg-accent));
+            border: 2px solid var(--accent-gold);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 8px 32px var(--shadow-dark);
+        }
+
+        .history-header {
+            font-family: 'Cinzel', serif;
+            font-size: 1.5rem;
+            color: var(--accent-gold);
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .game-record {
+            background: var(--bg-primary);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 4px solid var(--accent-gold);
+        }
+
+        .game-record.win {
+            border-left-color: #4d7630;
+        }
+
+        .game-record.loss {
+            border-left-color: var(--accent-red);
+        }
+
+        .game-date {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+        }
+
+        .game-result {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .game-details {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .clear-stats-btn {
+            width: 100%;
+            padding: 16px;
+            background: var(--accent-red);
+            border: 2px solid #a00000;
+            color: var(--text-primary);
+            border-radius: 12px;
+            font-size: 1rem;
+            cursor: pointer;
+            font-family: 'Cinzel', serif;
+            font-weight: 600;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .clear-stats-btn:hover {
+            background: #a00000;
+            box-shadow: 0 0 20px rgba(139, 0, 0, 0.5);
+        }
+
+        /* Decks View Styles */
+        .decks-view {
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        .add-deck-section {
+            background: linear-gradient(145deg, var(--bg-secondary), var(--bg-accent));
+            border: 2px solid var(--accent-gold);
+            border-radius: 16px;
+            padding: 25px;
+            margin-top: 20px;
+            box-shadow: 0 8px 32px var(--shadow-dark);
+        }
+
+        .section-title {
+            font-family: 'Cinzel', serif;
+            font-size: 1.5rem;
+            color: var(--accent-gold);
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .deck-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .form-input {
+            background: var(--bg-primary);
+            border: 2px solid var(--text-secondary);
+            border-radius: 8px;
+            padding: 12px;
+            color: var(--text-primary);
+            font-family: 'Crimson Pro', serif;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent-gold);
+            box-shadow: 0 0 10px var(--glow-gold);
+        }
+
+        .color-selector {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+        }
+
+        .color-option {
+            width: 100%;
+            aspect-ratio: 1;
+            border: 3px solid transparent;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .color-option:hover {
+            transform: scale(1.1);
+        }
+
+        .color-option.selected {
+            border-color: var(--accent-gold);
+            box-shadow: 0 0 15px var(--glow-gold);
+        }
+
+        .color-option.white { background: #f0e68c; }
+        .color-option.blue { background: #4169e1; }
+        .color-option.black { background: #2f2f2f; }
+        .color-option.red { background: #dc143c; }
+        .color-option.green { background: #228b22; }
+
+        .add-deck-btn {
+            padding: 14px;
+            background: var(--accent-gold);
+            border: none;
+            color: var(--bg-primary);
+            border-radius: 10px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            font-family: 'Cinzel', serif;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .add-deck-btn:hover {
+            background: var(--text-primary);
+            box-shadow: 0 0 20px var(--glow-gold);
+            transform: translateY(-2px);
+        }
+
+        .decks-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .deck-card {
+            background: linear-gradient(145deg, var(--bg-secondary), var(--bg-accent));
+            border: 2px solid var(--accent-gold);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 8px 32px var(--shadow-dark);
+            transition: all 0.3s ease;
+        }
+
+        .deck-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 40px var(--shadow-dark);
+        }
+
+        .deck-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .deck-name {
+            font-family: 'Cinzel', serif;
+            font-size: 1.3rem;
+            color: var(--accent-gold);
+            font-weight: 600;
+        }
+
+        .deck-colors {
+            display: flex;
+            gap: 5px;
+        }
+
+        .deck-color-dot {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid var(--text-secondary);
+        }
+
+        .deck-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .deck-stat {
+            text-align: center;
+        }
+
+        .deck-stat-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .deck-stat-value {
+            font-size: 1.5rem;
+            font-family: 'Cinzel', serif;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-top: 5px;
+        }
+
+        .deck-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .deck-btn {
+            flex: 1;
+            padding: 10px;
+            background: var(--bg-accent);
+            border: 1px solid var(--text-secondary);
+            color: var(--text-primary);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            font-family: 'Crimson Pro', serif;
+            transition: all 0.3s ease;
+        }
+
+        .deck-btn:hover {
+            background: var(--bg-primary);
+            border-color: var(--accent-gold);
+        }
+
+        .deck-btn.delete {
+            background: var(--accent-red);
+            border-color: #a00000;
+        }
+
+        .deck-btn.delete:hover {
+            background: #a00000;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: linear-gradient(145deg, var(--bg-secondary), var(--bg-accent));
+            border: 2px solid var(--accent-gold);
+            border-radius: 16px;
+            padding: 30px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 16px 64px var(--shadow-dark);
+            animation: slideInUp 0.4s ease-out;
+        }
+
+        .modal-title {
+            font-family: 'Cinzel', serif;
+            font-size: 1.5rem;
+            color: var(--accent-gold);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .deck-select {
+            background: var(--bg-primary);
+            border: 2px solid var(--text-secondary);
+            border-radius: 8px;
+            padding: 12px;
+            color: var(--text-primary);
+            font-family: 'Crimson Pro', serif;
+            font-size: 1rem;
+            width: 100%;
+            margin-bottom: 20px;
+            cursor: pointer;
+        }
+
+        .deck-select:focus {
+            outline: none;
+            border-color: var(--accent-gold);
+            box-shadow: 0 0 10px var(--glow-gold);
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            cursor: pointer;
+            font-family: 'Cinzel', serif;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .modal-btn.confirm {
+            background: var(--accent-gold);
+            color: var(--bg-primary);
+        }
+
+        .modal-btn.confirm:hover {
+            background: var(--text-primary);
+            box-shadow: 0 0 20px var(--glow-gold);
+        }
+
+        .modal-btn.cancel {
+            background: var(--bg-accent);
+            color: var(--text-primary);
+            border: 2px solid var(--text-secondary);
+        }
+
+        .modal-btn.cancel:hover {
+            background: var(--bg-primary);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .counter-type-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .counter-type-option {
+            padding: 12px;
+            background: var(--bg-primary);
+            border: 2px solid var(--text-secondary);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-family: 'Crimson Pro', serif;
+            font-size: 1rem;
+        }
+
+        .counter-type-option:hover {
+            border-color: var(--accent-gold);
+            background: var(--bg-accent);
+        }
+
+        .counter-type-option.selected {
+            border-color: var(--accent-gold);
+            background: var(--accent-gold);
+            color: var(--bg-primary);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .life-display {
+                font-size: 3rem;
+            }
+            
+            .players-container.grid .life-display {
+                font-size: 2.5rem;
+            }
+            
+            .life-btn {
+                padding: 15px;
+                font-size: 1.2rem;
+            }
+
+            .players-container.grid .life-btn {
+                padding: 10px;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>⚔️ MTG LIFE ⚔️</h1>
+            <div class="subtitle">Counter & Statistics</div>
+        </header>
+
+        <div class="view-toggle">
+            <button id="counterViewBtn" class="active">Life Counter</button>
+            <button id="decksViewBtn">Decks</button>
+            <button id="statsViewBtn">Statistics</button>
+        </div>
+
+        <!-- Life Counter View -->
+        <div id="lifeCounterView" class="life-counter-view">
+            <div class="player-count-selector">
+                <button class="player-count-btn" data-count="2">2P</button>
+                <button class="player-count-btn" data-count="3">3P</button>
+                <button class="player-count-btn active" data-count="4">4P</button>
+            </div>
+
+            <div class="players-container grid" id="playersContainer">
+                <!-- Player 1 -->
+                <div class="player-card" id="player1Card">
+                    <div class="player-header">
+                        <span class="player-name">Player 1</span>
+                        <button class="reset-player" onclick="resetPlayer(0)">Reset</button>
+                    </div>
+                    <div class="life-display" id="player1Life">20</div>
+                    <div class="life-controls">
+                        <button class="life-btn decrement" onclick="changeLife(0, -1)">-1</button>
+                        <button class="life-btn decrement" onclick="changeLife(0, -5)">-5</button>
+                        <button class="life-btn increment" onclick="changeLife(0, 1)">+1</button>
+                        <button class="life-btn increment" onclick="changeLife(0, 5)">+5</button>
+                    </div>
+                    <div class="additional-counters" id="player1Counters"></div>
+                    <button class="add-counter-btn" onclick="openCounterModal(0)">+ Counter</button>
+                </div>
+
+                <!-- Player 2 -->
+                <div class="player-card" id="player2Card">
+                    <div class="player-header">
+                        <span class="player-name">Player 2</span>
+                        <button class="reset-player" onclick="resetPlayer(1)">Reset</button>
+                    </div>
+                    <div class="life-display" id="player2Life">20</div>
+                    <div class="life-controls">
+                        <button class="life-btn decrement" onclick="changeLife(1, -1)">-1</button>
+                        <button class="life-btn decrement" onclick="changeLife(1, -5)">-5</button>
+                        <button class="life-btn increment" onclick="changeLife(1, 1)">+1</button>
+                        <button class="life-btn increment" onclick="changeLife(1, 5)">+5</button>
+                    </div>
+                    <div class="additional-counters" id="player2Counters"></div>
+                    <button class="add-counter-btn" onclick="openCounterModal(1)">+ Counter</button>
+                </div>
+
+                <!-- Player 3 -->
+                <div class="player-card" id="player3Card">
+                    <div class="player-header">
+                        <span class="player-name">Player 3</span>
+                        <button class="reset-player" onclick="resetPlayer(2)">Reset</button>
+                    </div>
+                    <div class="life-display" id="player3Life">20</div>
+                    <div class="life-controls">
+                        <button class="life-btn decrement" onclick="changeLife(2, -1)">-1</button>
+                        <button class="life-btn decrement" onclick="changeLife(2, -5)">-5</button>
+                        <button class="life-btn increment" onclick="changeLife(2, 1)">+1</button>
+                        <button class="life-btn increment" onclick="changeLife(2, 5)">+5</button>
+                    </div>
+                    <div class="additional-counters" id="player3Counters"></div>
+                    <button class="add-counter-btn" onclick="openCounterModal(2)">+ Counter</button>
+                </div>
+
+                <!-- Player 4 / Blank -->
+                <div class="player-card blank" id="player4Card">
+                </div>
+            </div>
+
+            <div class="game-controls">
+                <button class="game-btn" onclick="endGame('win')">Win Game</button>
+                <button class="game-btn" onclick="endGame('loss')">Loss Game</button>
+                <button class="game-btn" onclick="resetGame()">New Game</button>
+            </div>
+        </div>
+
+        <!-- Decks View -->
+        <div id="decksView" class="decks-view hidden">
+            <div id="decksList" class="decks-list"></div>
+
+            <div class="add-deck-section">
+                <div class="section-title">Create New Deck</div>
+                <form class="deck-form" onsubmit="addDeck(event)">
+                    <div class="form-group">
+                        <label class="form-label">Deck Name</label>
+                        <input type="text" id="deckName" class="form-input" placeholder="Enter deck name..." required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Colors</label>
+                        <div class="color-selector" id="colorSelector">
+                            <div class="color-option white" data-color="white" onclick="toggleColor('white')"></div>
+                            <div class="color-option blue" data-color="blue" onclick="toggleColor('blue')"></div>
+                            <div class="color-option black" data-color="black" onclick="toggleColor('black')"></div>
+                            <div class="color-option red" data-color="red" onclick="toggleColor('red')"></div>
+                            <div class="color-option green" data-color="green" onclick="toggleColor('green')"></div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Notes (Optional)</label>
+                        <input type="text" id="deckNotes" class="form-input" placeholder="Commander, strategy, etc...">
+                    </div>
+                    <button type="submit" class="add-deck-btn">Add Deck</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Statistics View -->
+        <div id="statsView" class="stats-view hidden">
+            <div class="stats-summary">
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-label">Total Games</div>
+                        <div class="stat-value" id="totalGames">0</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Wins</div>
+                        <div class="stat-value" id="totalWins">0</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Losses</div>
+                        <div class="stat-value" id="totalLosses">0</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Win Rate</div>
+                        <div class="stat-value" id="winRate">0%</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="game-history">
+                <div class="history-header">Recent Games</div>
+                <div id="gameHistoryList"></div>
+            </div>
+
+            <button class="clear-stats-btn" onclick="clearAllStats()">Clear All Statistics</button>
+        </div>
+    </div>
+
+    <!-- Deck Selection Modal -->
+    <div id="deckModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-title">Select Deck</div>
+            <select id="deckSelect" class="deck-select">
+                <option value="">No deck (just tracking game)</option>
+            </select>
+            <div class="modal-buttons">
+                <button class="modal-btn cancel" onclick="closeDeckModal()">Cancel</button>
+                <button class="modal-btn confirm" onclick="confirmGameEnd()">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Counter Modal -->
+    <div id="counterModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-title">Add Counter</div>
+            <div class="counter-type-list">
+                <div class="counter-type-option" onclick="selectCounterType('Commander')">Commander Damage</div>
+                <div class="counter-type-option" onclick="selectCounterType('Poison')">Poison</div>
+                <div class="counter-type-option" onclick="selectCounterType('Experience')">Experience</div>
+                <div class="counter-type-option" onclick="selectCounterType('Energy')">Energy</div>
+                <div class="counter-type-option" onclick="selectCounterType('Custom')">Custom</div>
+            </div>
+            <input type="text" id="customCounterName" class="form-input" placeholder="Custom counter name..." style="display: none; margin-bottom: 15px;">
+            <div class="modal-buttons">
+                <button class="modal-btn cancel" onclick="closeCounterModal()">Cancel</button>
+                <button class="modal-btn confirm" onclick="confirmAddCounter()">Add</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        let gameState = {
+            playerCount: 4,
+            players: [20, 20, 20, 20],
+            counters: [[], [], [], []], // Additional counters for each player
+            gameStartTime: Date.now()
+        };
+
+        // Track pending game result
+        let pendingGameResult = null;
+
+        // Selected colors for new deck
+        let selectedColors = [];
+
+        // Counter modal state
+        let currentPlayerForCounter = null;
+        let selectedCounterType = null;
+
+        // Initialize from localStorage
+        function initApp() {
+            const savedState = localStorage.getItem('mtgGameState');
+            if (savedState) {
+                gameState = JSON.parse(savedState);
+                // Ensure counters array exists for backwards compatibility
+                if (!gameState.counters) {
+                    gameState.counters = Array(gameState.players.length).fill(null).map(() => []);
+                }
+                updatePlayerCountUI();
+                updateAllLifeDisplays();
+                renderAllCounters();
+            }
+            updateStats();
+            loadDecks();
+        }
+
+        // Save state to localStorage
+        function saveState() {
+            localStorage.setItem('mtgGameState', JSON.stringify(gameState));
+        }
+
+        // Set player count
+        function setPlayerCount(count) {
+            gameState.playerCount = count;
+            
+            // Adjust players array
+            while (gameState.players.length < count) {
+                gameState.players.push(20);
+                gameState.counters.push([]);
+            }
+            while (gameState.players.length > count) {
+                gameState.players.pop();
+                gameState.counters.pop();
+            }
+            
+            updatePlayerCountUI();
+            saveState();
+        }
+
+        // Update player count UI
+        function updatePlayerCountUI() {
+            const container = document.getElementById('playersContainer');
+            const player1 = document.getElementById('player1Card');
+            const player2 = document.getElementById('player2Card');
+            const player3 = document.getElementById('player3Card');
+            const player4 = document.getElementById('player4Card');
+            
+            // Update active button
+            document.querySelectorAll('.player-count-btn').forEach(btn => {
+                if (parseInt(btn.getAttribute('data-count')) === gameState.playerCount) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+
+            // Remove all rotation classes first
+            [player1, player2, player3, player4].forEach(card => {
+                card.classList.remove('rotate-90', 'rotate-180', 'rotate-270');
+            });
+            
+            if (gameState.playerCount === 2) {
+                // Stack layout for 2 players
+                // Top player: no rotation, Bottom player: 180 degrees
+                container.classList.remove('grid');
+                player1.classList.remove('hidden');
+                player2.classList.remove('hidden');
+                player3.classList.add('hidden');
+                player4.classList.add('hidden');
+                
+                player1.classList.add('rotate-180'); // Bottom player rotated
+            } else if (gameState.playerCount === 3) {
+                // Grid with 3 players, one blank
+                // Top-left: 90°, Top-right: -90°, Bottom-left: 90°, Bottom-right: blank
+                container.classList.add('grid');
+                player1.classList.remove('hidden');
+                player2.classList.remove('hidden');
+                player3.classList.remove('hidden');
+                player4.classList.remove('hidden');
+                player4.classList.add('blank');
+                player4.innerHTML = ''; // Clear blank card
+                
+                player1.classList.add('rotate-90');  // Top-left
+                player2.classList.add('rotate-270'); // Top-right
+                player3.classList.add('rotate-90');  // Bottom-left
+            } else if (gameState.playerCount === 4) {
+                // Grid with 4 players
+                // Top-left: 90°, Top-right: -90°, Bottom-left: 90°, Bottom-right: -90°
+                container.classList.add('grid');
+                player1.classList.remove('hidden');
+                player2.classList.remove('hidden');
+                player3.classList.remove('hidden');
+                player4.classList.remove('hidden');
+                player4.classList.remove('blank');
+                
+                // Rebuild player 4 if it was blank
+                if (!document.getElementById('player4Life')) {
+                    player4.innerHTML = `
+                        <div class="player-header">
+                            <span class="player-name">Player 4</span>
+                            <button class="reset-player" onclick="resetPlayer(3)">Reset</button>
+                        </div>
+                        <div class="life-display" id="player4Life">20</div>
+                        <div class="life-controls">
+                            <button class="life-btn decrement" onclick="changeLife(3, -1)">-1</button>
+                            <button class="life-btn decrement" onclick="changeLife(3, -5)">-5</button>
+                            <button class="life-btn increment" onclick="changeLife(3, 1)">+1</button>
+                            <button class="life-btn increment" onclick="changeLife(3, 5)">+5</button>
+                        </div>
+                        <div class="additional-counters" id="player4Counters"></div>
+                        <button class="add-counter-btn" onclick="openCounterModal(3)">+ Counter</button>
+                    `;
+                }
+                
+                player1.classList.add('rotate-90');  // Top-left
+                player2.classList.add('rotate-270'); // Top-right
+                player3.classList.add('rotate-90');  // Bottom-left
+                player4.classList.add('rotate-270'); // Bottom-right
+            }
+            
+            updateAllLifeDisplays();
+            renderAllCounters();
+        }
+
+        // Update all life displays
+        function updateAllLifeDisplays() {
+            for (let i = 0; i < gameState.players.length; i++) {
+                const lifeElement = document.getElementById(`player${i+1}Life`);
+                if (lifeElement) {
+                    lifeElement.textContent = gameState.players[i];
+                }
+            }
+        }
+
+        // Change life total
+        function changeLife(playerIndex, amount) {
+            gameState.players[playerIndex] += amount;
+            document.getElementById(`player${playerIndex+1}Life`).textContent = gameState.players[playerIndex];
+            saveState();
+        }
+
+        // Reset individual player
+        function resetPlayer(playerIndex) {
+            gameState.players[playerIndex] = 20;
+            gameState.counters[playerIndex] = []; // Clear all counters
+            document.getElementById(`player${playerIndex+1}Life`).textContent = 20;
+            renderPlayerCounters(playerIndex);
+            saveState();
+        }
+
+        // Reset entire game
+        function resetGame() {
+            gameState.players = gameState.players.map(() => 20);
+            gameState.counters = gameState.counters.map(() => []); // Clear all counters
+            gameState.gameStartTime = Date.now();
+            updateAllLifeDisplays();
+            renderAllCounters();
+            saveState();
+        }
+
+        // End game - show deck selection modal
+        function endGame(result) {
+            pendingGameResult = result;
+            populateDeckSelect();
+            document.getElementById('deckModal').classList.add('active');
+        }
+
+        // Populate deck select dropdown
+        function populateDeckSelect() {
+            const decks = JSON.parse(localStorage.getItem('mtgDecks') || '[]');
+            const select = document.getElementById('deckSelect');
+            
+            select.innerHTML = '<option value="">No deck (just tracking game)</option>';
+            
+            decks.forEach(deck => {
+                const option = document.createElement('option');
+                option.value = deck.id;
+                option.textContent = deck.name;
+                select.appendChild(option);
+            });
+        }
+
+        // Close deck modal
+        function closeDeckModal() {
+            document.getElementById('deckModal').classList.remove('active');
+            pendingGameResult = null;
+        }
+
+        // Confirm game end with selected deck
+        function confirmGameEnd() {
+            const selectedDeckId = document.getElementById('deckSelect').value;
+            
+            const games = JSON.parse(localStorage.getItem('mtgGameHistory') || '[]');
+            
+            const gameRecord = {
+                id: Date.now().toString(),
+                date: new Date().toISOString(),
+                result: pendingGameResult,
+                playerCount: gameState.playerCount,
+                finalLives: [...gameState.players],
+                duration: Math.floor((Date.now() - gameState.gameStartTime) / 1000 / 60), // minutes
+                deckId: selectedDeckId || null
+            };
+            
+            games.unshift(gameRecord);
+            
+            // Keep only last 100 games
+            if (games.length > 100) {
+                games.pop();
+            }
+            
+            localStorage.setItem('mtgGameHistory', JSON.stringify(games));
+            
+            // Update deck stats if a deck was selected
+            if (selectedDeckId) {
+                updateDeckStats(selectedDeckId, pendingGameResult);
+            }
+            
+            // Close modal
+            closeDeckModal();
+            
+            // Reset for new game
+            resetGame();
+            
+            // Show confirmation
+            alert(`Game recorded as ${pendingGameResult.toUpperCase()}!`);
+            
+            // Update stats if on that view
+            if (!document.getElementById('statsView').classList.contains('hidden')) {
+                updateStats();
+            }
+        }
+
+        // Update deck statistics
+        function updateDeckStats(deckId, result) {
+            const decks = JSON.parse(localStorage.getItem('mtgDecks') || '[]');
+            const deck = decks.find(d => d.id === deckId);
+            
+            if (deck) {
+                deck.gamesPlayed = (deck.gamesPlayed || 0) + 1;
+                if (result === 'win') {
+                    deck.wins = (deck.wins || 0) + 1;
+                } else {
+                    deck.losses = (deck.losses || 0) + 1;
+                }
+                
+                localStorage.setItem('mtgDecks', JSON.stringify(decks));
+                
+                // Reload decks view if visible
+                if (!document.getElementById('decksView').classList.contains('hidden')) {
+                    loadDecks();
+                }
+            }
+        }
+
+        // Update statistics display
+        function updateStats() {
+            const games = JSON.parse(localStorage.getItem('mtgGameHistory') || '[]');
+            
+            const totalGames = games.length;
+            const wins = games.filter(g => g.result === 'win').length;
+            const losses = games.filter(g => g.result === 'loss').length;
+            const winRate = totalGames > 0 ? Math.round((wins / totalGames) * 100) : 0;
+            
+            document.getElementById('totalGames').textContent = totalGames;
+            document.getElementById('totalWins').textContent = wins;
+            document.getElementById('totalLosses').textContent = losses;
+            document.getElementById('winRate').textContent = winRate + '%';
+            
+            // Display game history
+            const historyList = document.getElementById('gameHistoryList');
+            if (games.length === 0) {
+                historyList.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-secondary);">No games recorded yet</div>';
+            } else {
+                const decks = JSON.parse(localStorage.getItem('mtgDecks') || '[]');
+                
+                historyList.innerHTML = games.slice(0, 10).map(game => {
+                    const date = new Date(game.date);
+                    const dateStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    
+                    let deckName = 'No deck';
+                    if (game.deckId) {
+                        const deck = decks.find(d => d.id === game.deckId);
+                        deckName = deck ? deck.name : 'Deleted deck';
+                    }
+                    
+                    // Format final lives display
+                    const livesDisplay = game.finalLives ? 
+                        game.finalLives.map((life, i) => `P${i+1}:${life}`).join(' | ') :
+                        `P1: ${game.player1FinalLife || 0} | P2: ${game.player2FinalLife || 0}`;
+                    
+                    return `
+                        <div class="game-record ${game.result}">
+                            <div class="game-date">${dateStr}</div>
+                            <div class="game-result">${game.result.toUpperCase()} - ${deckName}</div>
+                            <div class="game-details">
+                                ${livesDisplay} | ${game.duration} min
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+
+        // Clear all statistics
+        function clearAllStats() {
+            if (confirm('Are you sure you want to clear all game statistics? This cannot be undone.')) {
+                localStorage.removeItem('mtgGameHistory');
+                
+                // Reset deck stats
+                const decks = JSON.parse(localStorage.getItem('mtgDecks') || '[]');
+                decks.forEach(deck => {
+                    deck.gamesPlayed = 0;
+                    deck.wins = 0;
+                    deck.losses = 0;
+                });
+                localStorage.setItem('mtgDecks', JSON.stringify(decks));
+                
+                updateStats();
+                loadDecks();
+                alert('All statistics cleared!');
+            }
+        }
+
+        // === COUNTER MANAGEMENT ===
+
+        // Open counter modal
+        function openCounterModal(playerIndex) {
+            currentPlayerForCounter = playerIndex;
+            selectedCounterType = null;
+            document.getElementById('customCounterName').style.display = 'none';
+            document.getElementById('customCounterName').value = '';
+            document.querySelectorAll('.counter-type-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            document.getElementById('counterModal').classList.add('active');
+        }
+
+        // Select counter type
+        function selectCounterType(type) {
+            selectedCounterType = type;
+            document.querySelectorAll('.counter-type-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            event.target.classList.add('selected');
+            
+            if (type === 'Custom') {
+                document.getElementById('customCounterName').style.display = 'block';
+            } else {
+                document.getElementById('customCounterName').style.display = 'none';
+            }
+        }
+
+        // Close counter modal
+        function closeCounterModal() {
+            document.getElementById('counterModal').classList.remove('active');
+            currentPlayerForCounter = null;
+            selectedCounterType = null;
+        }
+
+        // Confirm add counter
+        function confirmAddCounter() {
+            if (!selectedCounterType) {
+                alert('Please select a counter type');
+                return;
+            }
+
+            let counterName = selectedCounterType;
+            if (selectedCounterType === 'Custom') {
+                counterName = document.getElementById('customCounterName').value.trim();
+                if (!counterName) {
+                    alert('Please enter a custom counter name');
+                    return;
+                }
+            }
+
+            // Add counter to player
+            const counterId = Date.now().toString();
+            gameState.counters[currentPlayerForCounter].push({
+                id: counterId,
+                name: counterName,
+                value: 0
+            });
+
+            renderPlayerCounters(currentPlayerForCounter);
+            saveState();
+            closeCounterModal();
+        }
+
+        // Change counter value
+        function changeCounter(playerIndex, counterId, amount) {
+            const counter = gameState.counters[playerIndex].find(c => c.id === counterId);
+            if (counter) {
+                counter.value = Math.max(0, counter.value + amount);
+                renderPlayerCounters(playerIndex);
+                saveState();
+            }
+        }
+
+        // Remove counter
+        function removeCounter(playerIndex, counterId) {
+            gameState.counters[playerIndex] = gameState.counters[playerIndex].filter(c => c.id !== counterId);
+            renderPlayerCounters(playerIndex);
+            saveState();
+        }
+
+        // Render counters for a player
+        function renderPlayerCounters(playerIndex) {
+            const countersContainer = document.getElementById(`player${playerIndex+1}Counters`);
+            if (!countersContainer) return;
+
+            const counters = gameState.counters[playerIndex] || [];
+            
+            if (counters.length === 0) {
+                countersContainer.innerHTML = '';
+                return;
+            }
+
+            countersContainer.innerHTML = counters.map(counter => `
+                <div class="counter-row">
+                    <span class="counter-label">${counter.name}</span>
+                    <button class="counter-btn" onclick="changeCounter(${playerIndex}, '${counter.id}', -1)">-</button>
+                    <span class="counter-value">${counter.value}</span>
+                    <button class="counter-btn" onclick="changeCounter(${playerIndex}, '${counter.id}', 1)">+</button>
+                    <button class="counter-btn" onclick="removeCounter(${playerIndex}, '${counter.id}')" style="color: var(--accent-red);">×</button>
+                </div>
+            `).join('');
+        }
+
+        // Render all counters
+        function renderAllCounters() {
+            for (let i = 0; i < gameState.playerCount; i++) {
+                renderPlayerCounters(i);
+            }
+        }
+
+        // === DECK MANAGEMENT ===
+
+        // Toggle color selection
+        function toggleColor(color) {
+            const colorElement = document.querySelector(`.color-option[data-color="${color}"]`);
+            
+            if (selectedColors.includes(color)) {
+                selectedColors = selectedColors.filter(c => c !== color);
+                colorElement.classList.remove('selected');
+            } else {
+                selectedColors.push(color);
+                colorElement.classList.add('selected');
+            }
+        }
+
+        // Add new deck
+        function addDeck(event) {
+            event.preventDefault();
+            
+            const name = document.getElementById('deckName').value.trim();
+            const notes = document.getElementById('deckNotes').value.trim();
+            
+            if (!name) {
+                alert('Please enter a deck name');
+                return;
+            }
+            
+            const decks = JSON.parse(localStorage.getItem('mtgDecks') || '[]');
+            
+            const newDeck = {
+                id: Date.now().toString(),
+                name: name,
+                colors: [...selectedColors],
+                notes: notes,
+                gamesPlayed: 0,
+                wins: 0,
+                losses: 0,
+                createdAt: new Date().toISOString()
+            };
+            
+            decks.push(newDeck);
+            localStorage.setItem('mtgDecks', JSON.stringify(decks));
+            
+            // Reset form
+            document.getElementById('deckName').value = '';
+            document.getElementById('deckNotes').value = '';
+            selectedColors = [];
+            document.querySelectorAll('.color-option').forEach(el => el.classList.remove('selected'));
+            
+            // Reload decks
+            loadDecks();
+            
+            alert('Deck added successfully!');
+        }
+
+        // Load and display decks
+        function loadDecks() {
+            const decks = JSON.parse(localStorage.getItem('mtgDecks') || '[]');
+            const decksList = document.getElementById('decksList');
+            
+            if (decks.length === 0) {
+                decksList.innerHTML = '<div class="empty-state">No decks yet. Create your first deck below!</div>';
+                return;
+            }
+            
+            decksList.innerHTML = decks.map(deck => {
+                const winRate = deck.gamesPlayed > 0 ? Math.round((deck.wins / deck.gamesPlayed) * 100) : 0;
+                
+                const colorDots = deck.colors.map(color => 
+                    `<div class="deck-color-dot ${color}"></div>`
+                ).join('');
+                
+                return `
+                    <div class="deck-card">
+                        <div class="deck-header">
+                            <div class="deck-name">${deck.name}</div>
+                            <div class="deck-colors">${colorDots || '<span style="color: var(--text-secondary); font-size: 0.9rem;">Colorless</span>'}</div>
+                        </div>
+                        ${deck.notes ? `<div style="color: var(--text-secondary); margin-bottom: 15px; font-style: italic;">${deck.notes}</div>` : ''}
+                        <div class="deck-stats">
+                            <div class="deck-stat">
+                                <div class="deck-stat-label">Games</div>
+                                <div class="deck-stat-value">${deck.gamesPlayed}</div>
+                            </div>
+                            <div class="deck-stat">
+                                <div class="deck-stat-label">W/L</div>
+                                <div class="deck-stat-value">${deck.wins}/${deck.losses}</div>
+                            </div>
+                            <div class="deck-stat">
+                                <div class="deck-stat-label">Win Rate</div>
+                                <div class="deck-stat-value">${winRate}%</div>
+                            </div>
+                        </div>
+                        <div class="deck-actions">
+                            <button class="deck-btn delete" onclick="deleteDeck('${deck.id}')">Delete</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Delete deck
+        function deleteDeck(deckId) {
+            if (!confirm('Are you sure you want to delete this deck? Game history will remain but won\'t be linked to this deck.')) {
+                return;
+            }
+            
+            let decks = JSON.parse(localStorage.getItem('mtgDecks') || '[]');
+            decks = decks.filter(d => d.id !== deckId);
+            localStorage.setItem('mtgDecks', JSON.stringify(decks));
+            
+            loadDecks();
+        }
+
+        // === VIEW SWITCHING ===
+
+        document.getElementById('counterViewBtn').addEventListener('click', () => {
+            document.getElementById('lifeCounterView').classList.remove('hidden');
+            document.getElementById('decksView').classList.add('hidden');
+            document.getElementById('statsView').classList.add('hidden');
+            document.getElementById('counterViewBtn').classList.add('active');
+            document.getElementById('decksViewBtn').classList.remove('active');
+            document.getElementById('statsViewBtn').classList.remove('active');
+        });
+
+        document.getElementById('decksViewBtn').addEventListener('click', () => {
+            document.getElementById('lifeCounterView').classList.add('hidden');
+            document.getElementById('decksView').classList.remove('hidden');
+            document.getElementById('statsView').classList.add('hidden');
+            document.getElementById('counterViewBtn').classList.remove('active');
+            document.getElementById('decksViewBtn').classList.add('active');
+            document.getElementById('statsViewBtn').classList.remove('active');
+            loadDecks();
+        });
+
+        document.getElementById('statsViewBtn').addEventListener('click', () => {
+            document.getElementById('lifeCounterView').classList.add('hidden');
+            document.getElementById('decksView').classList.add('hidden');
+            document.getElementById('statsView').classList.remove('hidden');
+            document.getElementById('statsViewBtn').classList.add('active');
+            document.getElementById('counterViewBtn').classList.remove('active');
+            document.getElementById('decksViewBtn').classList.remove('active');
+            updateStats();
+        });
+
+        // Player count button handlers
+        document.querySelectorAll('.player-count-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const count = parseInt(btn.getAttribute('data-count'));
+                setPlayerCount(count);
+            });
+        });
+
+        // Initialize app on load
+        initApp();
+    </script>
+</body>
+</html>
