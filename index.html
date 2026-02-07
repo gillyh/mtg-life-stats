@@ -169,9 +169,9 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             grid-template-rows: 1fr 1fr;
-            gap: 15px;
+            gap: 8px;
             min-height: 600px;
-            padding: 15px 5px;
+            padding: 10px 2px;
         }
 
         .player-card {
@@ -187,20 +187,20 @@
 
         /* Smaller padding for grid layout */
         .players-container.grid .player-card {
-            padding: 15px;
+            padding: 8px;
         }
 
         .players-container.grid .player-header {
-            margin-bottom: 10px;
+            margin-bottom: 6px;
         }
 
         .players-container.grid .player-name {
-            font-size: 1.1rem;
+            font-size: 0.9rem;
         }
 
         .players-container.grid .reset-player {
-            padding: 5px 10px;
-            font-size: 0.8rem;
+            padding: 3px 6px;
+            font-size: 0.7rem;
         }
 
         .player-card:nth-child(2) {
@@ -281,14 +281,18 @@
 
         /* Smaller life display for 3-4 players */
         .players-container.grid .life-display {
-            font-size: 3.5rem;
-            margin: 15px 0;
+            font-size: 2.8rem;
+            margin: 8px 0;
         }
 
         .life-controls {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 10px;
+        }
+
+        .players-container.grid .life-controls {
+            gap: 6px;
         }
 
         .additional-counters {
@@ -298,8 +302,8 @@
         }
 
         .players-container.grid .additional-counters {
-            margin-top: 10px;
-            padding-top: 10px;
+            margin-top: 6px;
+            padding-top: 6px;
         }
 
         .counter-row {
@@ -311,8 +315,9 @@
         }
 
         .players-container.grid .counter-row {
-            font-size: 0.85rem;
-            margin-bottom: 5px;
+            font-size: 0.7rem;
+            margin-bottom: 3px;
+            gap: 3px;
         }
 
         .counter-label {
@@ -324,7 +329,8 @@
         }
 
         .players-container.grid .counter-label {
-            font-size: 0.75rem;
+            font-size: 0.65rem;
+            letter-spacing: 0.3px;
         }
 
         .counter-value {
@@ -348,8 +354,8 @@
         }
 
         .players-container.grid .counter-btn {
-            padding: 3px 6px;
-            font-size: 0.75rem;
+            padding: 2px 4px;
+            font-size: 0.65rem;
         }
 
         .counter-btn:hover {
@@ -372,8 +378,9 @@
         }
 
         .players-container.grid .add-counter-btn {
-            padding: 5px;
-            font-size: 0.7rem;
+            padding: 4px;
+            font-size: 0.6rem;
+            margin-top: 4px;
         }
 
         .add-counter-btn:hover {
@@ -398,8 +405,8 @@
 
         /* Smaller buttons for 3-4 players */
         .players-container.grid .life-btn {
-            padding: 15px;
-            font-size: 1.3rem;
+            padding: 10px 8px;
+            font-size: 1.1rem;
         }
 
         .life-btn:active {
@@ -944,7 +951,7 @@
             }
 
             .container {
-                padding: 15px;
+                padding: 10px;
             }
             
             .life-display {
@@ -952,18 +959,19 @@
             }
             
             .players-container.grid {
-                gap: 12px;
-                padding: 10px 3px;
-                min-height: 580px;
+                gap: 6px;
+                padding: 8px 1px;
+                min-height: 550px;
             }
 
             .players-container.grid .player-card {
-                padding: 12px;
+                padding: 6px;
+                border-radius: 12px;
             }
 
             .players-container.grid .life-display {
-                font-size: 3rem;
-                margin: 12px 0;
+                font-size: 2.5rem;
+                margin: 6px 0;
             }
             
             .life-btn {
@@ -972,17 +980,26 @@
             }
 
             .players-container.grid .life-btn {
-                padding: 12px;
-                font-size: 1.1rem;
+                padding: 8px 6px;
+                font-size: 1rem;
+                border-radius: 8px;
+            }
+
+            .players-container.grid .life-controls {
+                gap: 4px;
             }
 
             .players-container.grid .player-name {
-                font-size: 0.95rem;
+                font-size: 0.85rem;
             }
 
             .players-container.grid .reset-player {
-                padding: 4px 8px;
-                font-size: 0.7rem;
+                padding: 2px 5px;
+                font-size: 0.65rem;
+            }
+
+            .players-container.grid .player-header {
+                margin-bottom: 4px;
             }
         }
     </style>
