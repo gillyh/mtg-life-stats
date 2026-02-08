@@ -213,7 +213,7 @@
         .life-tap-zone {
             position: absolute;
             top: 0;
-            bottom: 0;
+            bottom: 130px; /* Stop before buttons area */
             width: 50%;
             z-index: 5;
             cursor: pointer;
@@ -341,7 +341,7 @@
 
         .life-display {
             text-align: center;
-            font-size: 4.5rem;
+            font-size: 6rem;
             font-weight: 700;
             color: var(--text-primary);
             text-shadow: 0 4px 8px var(--shadow-dark);
@@ -444,7 +444,7 @@
 
         .add-counter-btn {
             width: 100%;
-            padding: 8px;
+            padding: 16px;
             background: var(--bg-primary);
             border: 1px solid var(--accent-gold);
             color: var(--accent-gold);
@@ -471,7 +471,7 @@
 
         .commander-btn {
             width: 100%;
-            padding: 8px;
+            padding: 16px;
             background: var(--bg-primary);
             border: 1px solid var(--accent-red);
             color: var(--accent-red);
@@ -2644,7 +2644,7 @@
 
         // === SERVICE WORKER FOR UPDATES ===
         // App version - increment this when you make changes
-        const APP_VERSION = '1.13';
+        const APP_VERSION = '1.14';
 
         // Register service worker
         if ('serviceWorker' in navigator) {
