@@ -58,7 +58,7 @@
             z-index: 1;
             max-width: 600px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 10px;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
@@ -66,13 +66,13 @@
 
         header {
             text-align: center;
-            padding: 20px 0;
+            padding: 10px 0;
             animation: fadeInDown 0.6s ease-out;
         }
 
         h1 {
             font-family: 'Cinzel', serif;
-            font-size: 2.5rem;
+            font-size: 2rem;
             font-weight: 700;
             color: var(--accent-gold);
             text-shadow: 0 0 20px var(--glow-gold), 0 2px 4px var(--shadow-dark);
@@ -123,8 +123,9 @@
             flex: 1;
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 10px;
             animation: fadeIn 0.8s ease-out 0.4s both;
+            overflow: hidden;
         }
 
         .player-count-selector {
@@ -169,9 +170,12 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             grid-template-rows: 1fr 1fr;
-            gap: 4px;
-            min-height: 520px;
-            padding: 5px 0px;
+            gap: 8px;
+            height: calc(100vh - 280px); /* Account for header and controls */
+            max-height: 600px;
+            min-height: 400px;
+            padding: 0;
+            width: 100%;
         }
 
         .player-card {
@@ -183,11 +187,14 @@
             animation: slideInUp 0.6s ease-out;
             display: flex;
             flex-direction: column;
+            min-width: 0; /* Prevent overflow */
+            min-height: 0; /* Prevent overflow */
         }
 
         /* Smaller padding for grid layout */
         .players-container.grid .player-card {
-            padding: 5px;
+            padding: 8px;
+            overflow: hidden;
         }
 
         .players-container.grid .player-header {
