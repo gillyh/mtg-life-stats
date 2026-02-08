@@ -308,11 +308,11 @@
         }
 
         .players-container.grid .player-card.rotate-90 {
-            transform: rotate(90deg) scale(0.85);
+            transform: rotate(90deg) scale(0.92);
         }
 
         .players-container.grid .player-card.rotate-270 {
-            transform: rotate(-90deg) scale(0.85);
+            transform: rotate(-90deg) scale(0.92);
         }
 
         .players-container.grid .player-card.rotate-180 {
@@ -568,8 +568,9 @@
         /* Commander damage badges - show per-player */
         .commander-total-badge {
             position: absolute;
-            bottom: 5px;
-            left: 5px;
+            top: 5px;
+            left: 50%;
+            transform: translateX(-50%);
             background: rgba(139, 0, 0, 0.8);
             color: var(--text-primary);
             padding: 2px 6px;
@@ -577,16 +578,18 @@
             font-family: 'Cinzel', serif;
             font-size: 0.7rem;
             font-weight: 600;
-            z-index: 5;
+            z-index: 15;
             display: flex;
             flex-wrap: wrap;
             gap: 3px;
             max-width: 80%;
+            justify-content: center;
         }
 
         .players-container.grid .commander-total-badge {
             font-size: 0.55rem;
             padding: 2px 4px;
+            max-width: 70%;
         }
 
         .commander-badge-item {
@@ -1324,7 +1327,7 @@
             }
             
             .players-container.grid {
-                gap: 6px;
+                gap: 4px;
                 padding: 0;
                 /* More aggressive height control for mobile */
                 height: calc(100svh - 220px);
@@ -1358,13 +1361,13 @@
                 gap: 2px;
             }
 
-            /* More aggressive scaling for rotated cards on mobile */
+            /* Less aggressive scaling for rotated cards on mobile to make them bigger */
             .players-container.grid .player-card.rotate-90 {
-                transform: rotate(90deg) scale(0.75);
+                transform: rotate(90deg) scale(0.88);
             }
 
             .players-container.grid .player-card.rotate-270 {
-                transform: rotate(-90deg) scale(0.75);
+                transform: rotate(-90deg) scale(0.88);
             }
 
             .players-container.grid .player-name {
