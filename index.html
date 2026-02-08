@@ -1377,7 +1377,7 @@
                 <div id="gameHistoryList"></div>
             </div>
 
-            <button class="clear-stats-btn" onclick="clearAllStats()">Clear All Statistics</button>
+            <button class="clear-stats-btn" id="clearStatsBtn">Clear All Statistics</button>
         </div>
     </div>
 
@@ -1778,11 +1778,19 @@
                                         ${livesDisplay} | ${game.duration} min
                                     </div>
                                 </div>
-                                <button class="delete-game-btn" onclick="deleteGame(${actualIndex})" title="Delete this game">×</button>
+                                <button class="delete-game-btn" data-game-index="${actualIndex}" title="Delete this game">×</button>
                             </div>
                         </div>
                     `;
                 }).join('');
+                
+                // Add click handlers to delete buttons
+                document.querySelectorAll('.delete-game-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const gameIndex = parseInt(this.getAttribute('data-game-index'));
+                        deleteGame(gameIndex);
+                    });
+                });
             }
         }
 
@@ -1813,10 +1821,17 @@
             }
             
             let games = JSON.parse(localStorage.getItem('mtgGameHistory') || '[]');
+            
+            // Check if the game index is valid
+            if (gameIndex < 0 || gameIndex >= games.length) {
+                alert('Game not found.');
+                return;
+            }
+            
             const game = games[gameIndex];
             
             // Update deck stats if this game had a deck
-            if (game.deckId) {
+            if (game && game.deckId) {
                 let decks = JSON.parse(localStorage.getItem('mtgDecks') || '[]');
                 const deck = decks.find(d => d.id === game.deckId);
                 
@@ -2333,6 +2348,9 @@
                 setPlayerCount(count);
             });
         });
+
+        // Clear stats button handler
+        document.getElementById('clearStatsBtn').addEventListener('click', clearAllStats);
 
         // Initialize app on load
         initApp();
