@@ -836,6 +836,34 @@
             color: var(--text-secondary);
         }
 
+        .game-notes {
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            margin-top: 8px;
+            padding: 8px;
+            background: rgba(212, 175, 55, 0.1);
+            border-radius: 4px;
+            font-style: italic;
+        }
+
+        .edit-note-btn {
+            background: var(--bg-accent);
+            border: 1px solid var(--text-secondary);
+            color: var(--text-secondary);
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            transition: all 0.2s ease;
+            margin-left: 8px;
+        }
+
+        .edit-note-btn:hover {
+            background: var(--accent-gold);
+            color: var(--bg-primary);
+            border-color: var(--accent-gold);
+        }
+
         .delete-game-btn {
             background: var(--accent-red);
             border: none;
@@ -885,6 +913,26 @@
         .clear-stats-btn:hover {
             background: #a00000;
             box-shadow: 0 0 20px rgba(139, 0, 0, 0.5);
+        }
+
+        .export-stats-btn {
+            width: 100%;
+            padding: 16px;
+            background: var(--accent-gold);
+            border: 2px solid var(--text-primary);
+            color: var(--bg-primary);
+            border-radius: 12px;
+            font-size: 1rem;
+            cursor: pointer;
+            font-family: 'Cinzel', serif;
+            font-weight: 600;
+            margin-top: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .export-stats-btn:hover {
+            background: var(--text-primary);
+            box-shadow: 0 0 20px var(--glow-gold);
         }
 
         /* Decks View Styles */
@@ -1592,6 +1640,7 @@
                 <div id="gameHistoryList"></div>
             </div>
 
+            <button class="export-stats-btn" id="exportStatsBtn">Export to CSV</button>
             <button class="clear-stats-btn" id="clearStatsBtn">Clear All Statistics</button>
         </div>
     </div>
@@ -1603,6 +1652,10 @@
             <select id="deckSelect" class="deck-select">
                 <option value="">No deck (just tracking game)</option>
             </select>
+            <div class="form-group" style="margin-top: 15px;">
+                <label class="form-label">Game Notes (Optional)</label>
+                <textarea id="gameNotes" class="form-input" placeholder="Add notes about this game..." style="min-height: 80px; resize: vertical; font-family: 'Crimson Pro', serif;"></textarea>
+            </div>
             <div class="modal-buttons">
                 <button class="modal-btn cancel" onclick="closeDeckModal()">Cancel</button>
                 <button class="modal-btn confirm" onclick="confirmGameEnd()">Confirm</button>
@@ -1657,6 +1710,18 @@
         </div>
     </div>
 
+    <!-- Edit Game Notes Modal -->
+    <div id="editNotesModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-title">Edit Game Notes</div>
+            <textarea id="editGameNotes" class="form-input" placeholder="Add notes about this game..." style="min-height: 100px; resize: vertical; font-family: 'Crimson Pro', serif; margin-bottom: 15px;"></textarea>
+            <div class="modal-buttons">
+                <button class="modal-btn cancel" onclick="closeEditNotesModal()">Cancel</button>
+                <button class="modal-btn confirm" onclick="saveEditedNotes()">Save</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Game state
         let gameState = {
@@ -1688,6 +1753,9 @@
 
         // Wake lock to keep screen on
         let wakeLock = null;
+
+        // Track which game is being edited for notes
+        let editingGameIndex = null;
 
         // Initialize from localStorage
         function initApp() {
@@ -2075,12 +2143,14 @@
         // Close deck modal
         function closeDeckModal() {
             document.getElementById('deckModal').classList.remove('active');
+            document.getElementById('gameNotes').value = ''; // Clear notes
             pendingGameResult = null;
         }
 
         // Confirm game end with selected deck
         function confirmGameEnd() {
             const selectedDeckId = document.getElementById('deckSelect').value;
+            const gameNotes = document.getElementById('gameNotes').value.trim();
             
             // Save the result before we clear it
             const gameResult = pendingGameResult;
@@ -2094,7 +2164,8 @@
                 playerCount: gameState.playerCount,
                 finalLives: [...gameState.players],
                 duration: Math.floor((Date.now() - gameState.gameStartTime) / 1000 / 60), // minutes
-                deckId: selectedDeckId || null
+                deckId: selectedDeckId || null,
+                notes: gameNotes || null
             };
             
             games.unshift(gameRecord);
@@ -2187,6 +2258,10 @@
                     // Find the actual index in the full games array (not just the slice)
                     const actualIndex = games.indexOf(game);
                     
+                    // Notes display
+                    const notesHtml = game.notes ? 
+                        `<div class="game-notes">"${game.notes}"</div>` : '';
+                    
                     return `
                         <div class="game-record ${game.result}">
                             <div style="display: flex; justify-content: space-between; align-items: flex-start;">
@@ -2195,7 +2270,9 @@
                                     <div class="game-result">${game.result.toUpperCase()} - ${deckName}</div>
                                     <div class="game-details">
                                         ${livesDisplay} | ${game.duration} min
+                                        <button class="edit-note-btn" data-game-index="${actualIndex}" title="Edit notes">📝 Notes</button>
                                     </div>
+                                    ${notesHtml}
                                 </div>
                                 <button class="delete-game-btn" data-game-index="${actualIndex}" title="Delete this game">×</button>
                             </div>
@@ -2208,6 +2285,14 @@
                     btn.addEventListener('click', function() {
                         const gameIndex = parseInt(this.getAttribute('data-game-index'));
                         deleteGame(gameIndex);
+                    });
+                });
+                
+                // Add click handlers to edit note buttons
+                document.querySelectorAll('.edit-note-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const gameIndex = parseInt(this.getAttribute('data-game-index'));
+                        openEditNotesModal(gameIndex);
                     });
                 });
             }
@@ -2231,6 +2316,61 @@
                 loadDecks();
                 alert('All statistics cleared!');
             }
+        }
+
+        // Export game history to CSV
+        function exportGameHistoryToCSV() {
+            const games = JSON.parse(localStorage.getItem('mtgGameHistory') || '[]');
+            
+            if (games.length === 0) {
+                alert('No game history to export!');
+                return;
+            }
+            
+            const decks = JSON.parse(localStorage.getItem('mtgDecks') || '[]');
+            
+            // CSV Header
+            let csv = 'Date,Time,Result,Deck,Players,Final Lives,Duration (min),Notes\n';
+            
+            // Add each game
+            games.forEach(game => {
+                const date = new Date(game.date);
+                const dateStr = date.toLocaleDateString();
+                const timeStr = date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                
+                let deckName = 'No deck';
+                if (game.deckId) {
+                    const deck = decks.find(d => d.id === game.deckId);
+                    deckName = deck ? deck.name : 'Deleted deck';
+                }
+                
+                // Format final lives
+                const livesDisplay = game.finalLives ? 
+                    game.finalLives.map((life, i) => `P${i+1}:${life}`).join(' | ') :
+                    `P1:${game.player1FinalLife || 0} | P2:${game.player2FinalLife || 0}`;
+                
+                // Escape quotes in notes and wrap in quotes if contains comma
+                let notes = game.notes || '';
+                notes = notes.replace(/"/g, '""'); // Escape quotes
+                if (notes.includes(',') || notes.includes('\n')) {
+                    notes = `"${notes}"`;
+                }
+                
+                csv += `${dateStr},${timeStr},${game.result},${deckName},${game.playerCount || 2},"${livesDisplay}",${game.duration || 0},${notes}\n`;
+            });
+            
+            // Create download link
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `mtg-game-history-${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            
+            alert(`Exported ${games.length} games to CSV!`);
         }
 
         // Delete individual game
@@ -2836,12 +2976,15 @@
         // Clear stats button handler
         document.getElementById('clearStatsBtn').addEventListener('click', clearAllStats);
 
+        // Export stats button handler
+        document.getElementById('exportStatsBtn').addEventListener('click', exportGameHistoryToCSV);
+
         // Initialize app on load
         initApp();
 
         // === SERVICE WORKER FOR UPDATES ===
         // App version - increment this when you make changes
-        const APP_VERSION = '1.18';
+        const APP_VERSION = '1.19';
 
         // Register service worker
         if ('serviceWorker' in navigator) {
@@ -2919,6 +3062,41 @@
                     alert('Update failed. Try closing and reopening the app.');
                 }
             }
+        }
+
+        // Open edit notes modal
+        function openEditNotesModal(gameIndex) {
+            const games = JSON.parse(localStorage.getItem('mtgGameHistory') || '[]');
+            const game = games[gameIndex];
+            
+            if (game) {
+                editingGameIndex = gameIndex;
+                document.getElementById('editGameNotes').value = game.notes || '';
+                document.getElementById('editNotesModal').classList.add('active');
+            }
+        }
+
+        // Close edit notes modal
+        function closeEditNotesModal() {
+            document.getElementById('editNotesModal').classList.remove('active');
+            document.getElementById('editGameNotes').value = '';
+            editingGameIndex = null;
+        }
+
+        // Save edited notes
+        function saveEditedNotes() {
+            if (editingGameIndex === null) return;
+            
+            const games = JSON.parse(localStorage.getItem('mtgGameHistory') || '[]');
+            const newNotes = document.getElementById('editGameNotes').value.trim();
+            
+            if (games[editingGameIndex]) {
+                games[editingGameIndex].notes = newNotes || null;
+                localStorage.setItem('mtgGameHistory', JSON.stringify(games));
+                updateStats();
+            }
+            
+            closeEditNotesModal();
         }
 
         // Store and check app version
