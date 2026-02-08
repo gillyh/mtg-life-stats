@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="MTG Life">
+    <meta name="theme-color" content="#d4af37">
+    <link rel="manifest" href="manifest.json">
     <title>MTG Life Counter</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -2638,6 +2641,50 @@
 
         // Initialize app on load
         initApp();
+
+        // === SERVICE WORKER FOR UPDATES ===
+        // App version - increment this when you make changes
+        const APP_VERSION = '1.13';
+
+        // Register service worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(registration => {
+                        console.log('Service Worker registered:', registration);
+                        
+                        // Check for updates every time the app loads
+                        registration.update();
+                        
+                        // Listen for updates
+                        registration.addEventListener('updatefound', () => {
+                            const newWorker = registration.installing;
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    // New version available
+                                    if (confirm('New version available! Reload to update?')) {
+                                        newWorker.postMessage({ type: 'SKIP_WAITING' });
+                                        window.location.reload();
+                                    }
+                                }
+                            });
+                        });
+                    })
+                    .catch(err => console.log('Service Worker registration failed:', err));
+                
+                // Reload page when new service worker takes control
+                navigator.serviceWorker.addEventListener('controllerchange', () => {
+                    window.location.reload();
+                });
+            });
+        }
+
+        // Store and check app version
+        const storedVersion = localStorage.getItem('appVersion');
+        if (storedVersion !== APP_VERSION) {
+            console.log(`Updated from ${storedVersion} to ${APP_VERSION}`);
+            localStorage.setItem('appVersion', APP_VERSION);
+        }
     </script>
 </body>
 </html>
