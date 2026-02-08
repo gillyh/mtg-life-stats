@@ -178,6 +178,9 @@
             width: 100%;
             /* Ensure grid container doesn't overflow */
             overflow: hidden;
+            /* Align items to prevent gaps */
+            align-items: stretch;
+            justify-items: stretch;
         }
 
         .player-card {
@@ -246,6 +249,10 @@
             transform-origin: center center;
             /* Ensure content fits within rotated bounds */
             box-sizing: border-box;
+            /* Center the card content */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
 
         .players-container.grid .player-header {
@@ -290,6 +297,26 @@
 
         .player-card.rotate-270 {
             transform: rotate(-90deg);
+        }
+
+        /* Scale rotated cards in grid to prevent overlap */
+        .players-container.grid .player-card.rotate-90,
+        .players-container.grid .player-card.rotate-270 {
+            /* When rotated 90°, width becomes height, so we need to scale down */
+            /* to fit within the grid cell properly */
+            transform-origin: center center;
+        }
+
+        .players-container.grid .player-card.rotate-90 {
+            transform: rotate(90deg) scale(0.85);
+        }
+
+        .players-container.grid .player-card.rotate-270 {
+            transform: rotate(-90deg) scale(0.85);
+        }
+
+        .players-container.grid .player-card.rotate-180 {
+            transform: rotate(180deg);
         }
 
         .player-header {
@@ -1331,6 +1358,15 @@
                 gap: 2px;
             }
 
+            /* More aggressive scaling for rotated cards on mobile */
+            .players-container.grid .player-card.rotate-90 {
+                transform: rotate(90deg) scale(0.75);
+            }
+
+            .players-container.grid .player-card.rotate-270 {
+                transform: rotate(-90deg) scale(0.75);
+            }
+
             .players-container.grid .player-name {
                 font-size: 0.75rem;
             }
@@ -2316,7 +2352,11 @@
 
                 // Build list of dealers who have dealt damage
                 const damageList = [];
-                for (let dealer = 0; dealer < gameState.playerCount; dealer++) {
+                
+                // In 1P mode, check damage from virtual opponents (players 2-4)
+                const maxDealers = gameState.playerCount === 1 ? 4 : gameState.playerCount;
+                
+                for (let dealer = 0; dealer < maxDealers; dealer++) {
                     if (dealer !== receiver) {
                         const damage = gameState.commanderDamage[receiver][dealer] || 0;
                         if (damage > 0) {
@@ -2334,7 +2374,11 @@
                     damageList.forEach(({ dealer, damage }) => {
                         const item = document.createElement('span');
                         item.className = 'commander-badge-item';
-                        item.textContent = `P${dealer+1}:${damage}`;
+                        // Use player names for 1P mode
+                        const dealerName = gameState.playerCount === 1 ? 
+                            (gameState.playerNames[dealer] || `P${dealer+1}`) : 
+                            `P${dealer+1}`;
+                        item.textContent = `${dealerName}:${damage}`;
                         badge.appendChild(item);
                     });
                     
