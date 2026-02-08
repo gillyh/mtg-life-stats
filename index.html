@@ -1572,6 +1572,22 @@
         </div>
     </div>
 
+    <!-- Version Update Notification Modal -->
+    <div id="versionUpdateModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-title">✨ App Updated!</div>
+            <p style="text-align: center; color: var(--text-secondary); margin-bottom: 20px; font-size: 1rem;">
+                Your MTG Life Counter has been updated to version <strong style="color: var(--accent-gold);" id="newVersionDisplay"></strong>
+            </p>
+            <p style="text-align: center; color: var(--text-secondary); margin-bottom: 20px; font-size: 0.9rem;">
+                New features and improvements are now available!
+            </p>
+            <div class="modal-buttons">
+                <button class="modal-btn confirm" onclick="closeVersionModal()" style="width: 100%;">Got it!</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Game state
         let gameState = {
@@ -2679,10 +2695,22 @@
             });
         }
 
+        // Close version update modal
+        function closeVersionModal() {
+            document.getElementById('versionUpdateModal').classList.remove('active');
+        }
+
         // Store and check app version
         const storedVersion = localStorage.getItem('appVersion');
         if (storedVersion !== APP_VERSION) {
             console.log(`Updated from ${storedVersion} to ${APP_VERSION}`);
+            
+            // Show update notification if there was a previous version
+            if (storedVersion) {
+                document.getElementById('newVersionDisplay').textContent = APP_VERSION;
+                document.getElementById('versionUpdateModal').classList.add('active');
+            }
+            
             localStorage.setItem('appVersion', APP_VERSION);
         }
     </script>

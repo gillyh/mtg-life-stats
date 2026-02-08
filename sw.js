@@ -1,4 +1,4 @@
-x// Service Worker for MTG Life Counter
+// Service Worker for MTG Life Counter
 // Version should match APP_VERSION in the HTML file
 const CACHE_VERSION = 'v1.14';
 const CACHE_NAME = `mtg-life-counter-${CACHE_VERSION}`;
