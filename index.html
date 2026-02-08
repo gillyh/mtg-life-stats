@@ -299,22 +299,7 @@
             transform: rotate(-90deg);
         }
 
-        /* Scale rotated cards in grid to prevent overlap */
-        .players-container.grid .player-card.rotate-90,
-        .players-container.grid .player-card.rotate-270 {
-            /* When rotated 90°, width becomes height, so we need to scale down */
-            /* to fit within the grid cell properly */
-            transform-origin: center center;
-        }
-
-        .players-container.grid .player-card.rotate-90 {
-            transform: rotate(90deg) scale(0.85);
-        }
-
-        .players-container.grid .player-card.rotate-270 {
-            transform: rotate(-90deg) scale(0.85);
-        }
-
+        /* In grid mode, 180° rotation doesn't need scaling (no dimension swap) */
         .players-container.grid .player-card.rotate-180 {
             transform: rotate(180deg);
         }
@@ -1361,14 +1346,6 @@
                 gap: 2px;
             }
 
-            /* More aggressive scaling for rotated cards on mobile */
-            .players-container.grid .player-card.rotate-90 {
-                transform: rotate(90deg) scale(0.75);
-            }
-
-            .players-container.grid .player-card.rotate-270 {
-                transform: rotate(-90deg) scale(0.75);
-            }
 
             .players-container.grid .player-name {
                 font-size: 0.75rem;
@@ -1718,7 +1695,7 @@
                 player1.classList.add('rotate-180'); // Bottom player rotated
             } else if (gameState.playerCount === 3) {
                 // Grid with 3 players, one blank
-                // Top-left: 90°, Top-right: -90°, Bottom-left: 90°, Bottom-right: blank
+                // Top-left: 180°, Top-right: 180°, Bottom-left: 0°, Bottom-right: blank
                 container.classList.add('grid');
                 player1.classList.remove('hidden');
                 player2.classList.remove('hidden');
@@ -1727,9 +1704,9 @@
                 player4.classList.add('blank');
                 player4.innerHTML = ''; // Clear blank card
                 
-                player1.classList.add('rotate-90');  // Top-left
-                player2.classList.add('rotate-270'); // Top-right
-                player3.classList.add('rotate-90');  // Bottom-left
+                player1.classList.add('rotate-180');  // Top-left
+                player2.classList.add('rotate-180'); // Top-right
+                // player3 has no rotation (bottom-left)
             } else if (gameState.playerCount === 4) {
                 // Grid with 4 players
                 // Top-left: 90°, Top-right: -90°, Bottom-left: 90°, Bottom-right: -90°
@@ -1761,10 +1738,10 @@
                     updatePlayer4Name();
                 }
                 
-                player1.classList.add('rotate-90');  // Top-left
-                player2.classList.add('rotate-270'); // Top-right
-                player3.classList.add('rotate-90');  // Bottom-left
-                player4.classList.add('rotate-270'); // Bottom-right
+                player1.classList.add('rotate-180');  // Top-left
+                player2.classList.add('rotate-180'); // Top-right
+                // player3 has no rotation (bottom-left)
+                // player4 has no rotation (bottom-right)
             }
             
             updateAllLifeDisplays();
