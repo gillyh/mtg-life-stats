@@ -189,6 +189,41 @@
             flex-direction: column;
             min-width: 0; /* Prevent overflow */
             min-height: 0; /* Prevent overflow */
+            position: relative; /* For tap zones */
+        }
+
+        /* Tap zones for life changes */
+        .life-tap-zone {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 50%;
+            z-index: 5;
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+
+        .life-tap-zone.left {
+            left: 0;
+            border-radius: 16px 0 0 16px;
+        }
+
+        .life-tap-zone.right {
+            right: 0;
+            border-radius: 0 16px 16px 0;
+        }
+
+        .life-tap-zone:active {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Show subtle indication on hover */
+        .life-tap-zone.left:hover {
+            background: rgba(139, 0, 0, 0.1);
+        }
+
+        .life-tap-zone.right:hover {
+            background: rgba(45, 80, 22, 0.1);
         }
 
         /* Smaller padding for grid layout */
@@ -246,6 +281,8 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 15px;
+            position: relative;
+            z-index: 10;
         }
 
         .player-name {
@@ -273,7 +310,7 @@
 
         .life-display {
             text-align: center;
-            font-size: 4rem;
+            font-size: 4.5rem;
             font-weight: 700;
             color: var(--text-primary);
             text-shadow: 0 4px 8px var(--shadow-dark);
@@ -288,14 +325,16 @@
 
         /* Smaller life display for 3-4 players */
         .players-container.grid .life-display {
-            font-size: 2.3rem;
+            font-size: 2.6rem;
             margin: 5px 0;
         }
 
         .life-controls {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: 1fr 1fr;
             gap: 10px;
+            position: relative;
+            z-index: 10;
         }
 
         .players-container.grid .life-controls {
@@ -306,6 +345,8 @@
             margin-top: 10px;
             padding-top: 10px;
             border-top: 1px solid var(--text-secondary);
+            position: relative;
+            z-index: 10;
         }
 
         .players-container.grid .additional-counters {
@@ -372,21 +413,23 @@
 
         .add-counter-btn {
             width: 100%;
-            padding: 6px;
+            padding: 8px;
             background: var(--bg-primary);
             border: 1px solid var(--accent-gold);
             color: var(--accent-gold);
             border-radius: 6px;
-            font-size: 0.75rem;
+            font-size: 0.85rem;
             cursor: pointer;
             transition: all 0.3s ease;
             margin-top: 5px;
             font-family: 'Crimson Pro', serif;
+            position: relative;
+            z-index: 10;
         }
 
         .players-container.grid .add-counter-btn {
-            padding: 4px;
-            font-size: 0.6rem;
+            padding: 5px;
+            font-size: 0.7rem;
             margin-top: 4px;
         }
 
@@ -397,21 +440,23 @@
 
         .commander-btn {
             width: 100%;
-            padding: 6px;
+            padding: 8px;
             background: var(--bg-primary);
             border: 1px solid var(--accent-red);
             color: var(--accent-red);
             border-radius: 6px;
-            font-size: 0.75rem;
+            font-size: 0.85rem;
             cursor: pointer;
             transition: all 0.3s ease;
             margin-top: 3px;
             font-family: 'Crimson Pro', serif;
+            position: relative;
+            z-index: 10;
         }
 
         .players-container.grid .commander-btn {
-            padding: 4px;
-            font-size: 0.6rem;
+            padding: 5px;
+            font-size: 0.7rem;
             margin-top: 2px;
         }
 
@@ -535,9 +580,9 @@
             background: var(--bg-accent);
             border: 2px solid var(--text-secondary);
             color: var(--text-primary);
-            padding: 20px;
+            padding: 15px;
             border-radius: 12px;
-            font-size: 1.5rem;
+            font-size: 1.2rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s ease;
@@ -548,8 +593,8 @@
 
         /* Smaller buttons for 3-4 players */
         .players-container.grid .life-btn {
-            padding: 8px 5px;
-            font-size: 0.95rem;
+            padding: 6px 4px;
+            font-size: 0.8rem;
         }
 
         .life-btn:active {
@@ -687,6 +732,33 @@
         .game-details {
             font-size: 0.9rem;
             color: var(--text-secondary);
+        }
+
+        .delete-game-btn {
+            background: var(--accent-red);
+            border: none;
+            color: var(--text-primary);
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.3rem;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+            margin-left: 10px;
+        }
+
+        .delete-game-btn:hover {
+            background: #a00000;
+            transform: scale(1.1);
+        }
+
+        .delete-game-btn:active {
+            transform: scale(0.95);
         }
 
         .hidden {
@@ -1161,7 +1233,7 @@
 <body>
     <div class="container">
         <header>
-            <h1>⚔️ MTG LIFE ⚔️</h1>
+            <h1>MTG LIFE</h1>
             <div class="subtitle">Counter & Statistics</div>
         </header>
 
@@ -1183,15 +1255,15 @@
             <div class="players-container grid" id="playersContainer">
                 <!-- Player 1 -->
                 <div class="player-card" id="player1Card">
+                    <div class="life-tap-zone left" onclick="changeLife(0, -1)"></div>
+                    <div class="life-tap-zone right" onclick="changeLife(0, 1)"></div>
                     <div class="player-header">
                         <span class="player-name">Player 1</span>
                         <button class="reset-player" onclick="resetPlayer(0)">Reset</button>
                     </div>
                     <div class="life-display" id="player1Life">40</div>
                     <div class="life-controls">
-                        <button class="life-btn decrement" onclick="changeLife(0, -1)">-1</button>
                         <button class="life-btn decrement" onclick="changeLife(0, -5)">-5</button>
-                        <button class="life-btn increment" onclick="changeLife(0, 1)">+1</button>
                         <button class="life-btn increment" onclick="changeLife(0, 5)">+5</button>
                     </div>
                     <div class="additional-counters" id="player1Counters"></div>
@@ -1201,15 +1273,15 @@
 
                 <!-- Player 2 -->
                 <div class="player-card" id="player2Card">
+                    <div class="life-tap-zone left" onclick="changeLife(1, -1)"></div>
+                    <div class="life-tap-zone right" onclick="changeLife(1, 1)"></div>
                     <div class="player-header">
                         <span class="player-name">Player 2</span>
                         <button class="reset-player" onclick="resetPlayer(1)">Reset</button>
                     </div>
                     <div class="life-display" id="player2Life">40</div>
                     <div class="life-controls">
-                        <button class="life-btn decrement" onclick="changeLife(1, -1)">-1</button>
                         <button class="life-btn decrement" onclick="changeLife(1, -5)">-5</button>
-                        <button class="life-btn increment" onclick="changeLife(1, 1)">+1</button>
                         <button class="life-btn increment" onclick="changeLife(1, 5)">+5</button>
                     </div>
                     <div class="additional-counters" id="player2Counters"></div>
@@ -1219,15 +1291,15 @@
 
                 <!-- Player 3 -->
                 <div class="player-card" id="player3Card">
+                    <div class="life-tap-zone left" onclick="changeLife(2, -1)"></div>
+                    <div class="life-tap-zone right" onclick="changeLife(2, 1)"></div>
                     <div class="player-header">
                         <span class="player-name">Player 3</span>
                         <button class="reset-player" onclick="resetPlayer(2)">Reset</button>
                     </div>
                     <div class="life-display" id="player3Life">40</div>
                     <div class="life-controls">
-                        <button class="life-btn decrement" onclick="changeLife(2, -1)">-1</button>
                         <button class="life-btn decrement" onclick="changeLife(2, -5)">-5</button>
-                        <button class="life-btn increment" onclick="changeLife(2, 1)">+1</button>
                         <button class="life-btn increment" onclick="changeLife(2, 5)">+5</button>
                     </div>
                     <div class="additional-counters" id="player3Counters"></div>
@@ -1241,8 +1313,8 @@
             </div>
 
             <div class="game-controls">
-                <button class="game-btn" onclick="endGame('win')">Win Game</button>
-                <button class="game-btn" onclick="endGame('loss')">Loss Game</button>
+                <button class="game-btn" onclick="endGame('win')">Win</button>
+                <button class="game-btn" onclick="endGame('loss')">Lose</button>
                 <button class="game-btn" onclick="resetGame()">New Game</button>
             </div>
         </div>
@@ -1482,15 +1554,15 @@
                 // Rebuild player 4 if it was blank
                 if (!document.getElementById('player4Life')) {
                     player4.innerHTML = `
+                        <div class="life-tap-zone left" onclick="changeLife(3, -1)"></div>
+                        <div class="life-tap-zone right" onclick="changeLife(3, 1)"></div>
                         <div class="player-header">
                             <span class="player-name">Player 4</span>
                             <button class="reset-player" onclick="resetPlayer(3)">Reset</button>
                         </div>
                         <div class="life-display" id="player4Life">40</div>
                         <div class="life-controls">
-                            <button class="life-btn decrement" onclick="changeLife(3, -1)">-1</button>
                             <button class="life-btn decrement" onclick="changeLife(3, -5)">-5</button>
-                            <button class="life-btn increment" onclick="changeLife(3, 1)">+1</button>
                             <button class="life-btn increment" onclick="changeLife(3, 5)">+5</button>
                         </div>
                         <div class="additional-counters" id="player4Counters"></div>
@@ -1591,12 +1663,15 @@
         function confirmGameEnd() {
             const selectedDeckId = document.getElementById('deckSelect').value;
             
+            // Save the result before we clear it
+            const gameResult = pendingGameResult;
+            
             const games = JSON.parse(localStorage.getItem('mtgGameHistory') || '[]');
             
             const gameRecord = {
                 id: Date.now().toString(),
                 date: new Date().toISOString(),
-                result: pendingGameResult,
+                result: gameResult,
                 playerCount: gameState.playerCount,
                 finalLives: [...gameState.players],
                 duration: Math.floor((Date.now() - gameState.gameStartTime) / 1000 / 60), // minutes
@@ -1614,7 +1689,7 @@
             
             // Update deck stats if a deck was selected
             if (selectedDeckId) {
-                updateDeckStats(selectedDeckId, pendingGameResult);
+                updateDeckStats(selectedDeckId, gameResult);
             }
             
             // Close modal
@@ -1624,7 +1699,7 @@
             resetGame();
             
             // Show confirmation
-            alert(`Game recorded as ${pendingGameResult.toUpperCase()}!`);
+            alert(`Game recorded as ${gameResult.toUpperCase()}!`);
             
             // Update stats if on that view
             if (!document.getElementById('statsView').classList.contains('hidden')) {
@@ -1675,7 +1750,7 @@
             } else {
                 const decks = JSON.parse(localStorage.getItem('mtgDecks') || '[]');
                 
-                historyList.innerHTML = games.slice(0, 10).map(game => {
+                historyList.innerHTML = games.slice(0, 10).map((game, index) => {
                     const date = new Date(game.date);
                     const dateStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                     
@@ -1690,12 +1765,20 @@
                         game.finalLives.map((life, i) => `P${i+1}:${life}`).join(' | ') :
                         `P1: ${game.player1FinalLife || 0} | P2: ${game.player2FinalLife || 0}`;
                     
+                    // Find the actual index in the full games array (not just the slice)
+                    const actualIndex = games.indexOf(game);
+                    
                     return `
                         <div class="game-record ${game.result}">
-                            <div class="game-date">${dateStr}</div>
-                            <div class="game-result">${game.result.toUpperCase()} - ${deckName}</div>
-                            <div class="game-details">
-                                ${livesDisplay} | ${game.duration} min
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                <div style="flex: 1;">
+                                    <div class="game-date">${dateStr}</div>
+                                    <div class="game-result">${game.result.toUpperCase()} - ${deckName}</div>
+                                    <div class="game-details">
+                                        ${livesDisplay} | ${game.duration} min
+                                    </div>
+                                </div>
+                                <button class="delete-game-btn" onclick="deleteGame(${actualIndex})" title="Delete this game">×</button>
                             </div>
                         </div>
                     `;
@@ -1721,6 +1804,40 @@
                 loadDecks();
                 alert('All statistics cleared!');
             }
+        }
+
+        // Delete individual game
+        function deleteGame(gameIndex) {
+            if (!confirm('Delete this game record?')) {
+                return;
+            }
+            
+            let games = JSON.parse(localStorage.getItem('mtgGameHistory') || '[]');
+            const game = games[gameIndex];
+            
+            // Update deck stats if this game had a deck
+            if (game.deckId) {
+                let decks = JSON.parse(localStorage.getItem('mtgDecks') || '[]');
+                const deck = decks.find(d => d.id === game.deckId);
+                
+                if (deck) {
+                    deck.gamesPlayed = Math.max(0, deck.gamesPlayed - 1);
+                    if (game.result === 'win') {
+                        deck.wins = Math.max(0, deck.wins - 1);
+                    } else if (game.result === 'loss') {
+                        deck.losses = Math.max(0, deck.losses - 1);
+                    }
+                    localStorage.setItem('mtgDecks', JSON.stringify(decks));
+                }
+            }
+            
+            // Remove the game
+            games.splice(gameIndex, 1);
+            localStorage.setItem('mtgGameHistory', JSON.stringify(games));
+            
+            // Refresh displays
+            updateStats();
+            loadDecks();
         }
 
         // === COMMANDER DAMAGE ===
