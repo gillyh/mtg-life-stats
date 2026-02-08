@@ -352,6 +352,47 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            position: relative;
+        }
+
+        /* Life change indicator */
+        .life-change-indicator {
+            position: absolute;
+            top: -15px;
+            right: 10px;
+            font-size: 2rem;
+            font-weight: 700;
+            font-family: 'Cinzel', serif;
+            padding: 5px 15px;
+            border-radius: 8px;
+            animation: pulseIndicator 0.3s ease-out;
+            z-index: 20;
+            pointer-events: none;
+        }
+
+        .life-change-indicator.positive {
+            color: #4d7630;
+            background: rgba(45, 80, 22, 0.3);
+            border: 2px solid #4d7630;
+        }
+
+        .life-change-indicator.negative {
+            color: #dc143c;
+            background: rgba(139, 0, 0, 0.3);
+            border: 2px solid #dc143c;
+        }
+
+        .players-container.grid .life-change-indicator {
+            font-size: 1.2rem;
+            padding: 3px 8px;
+            top: -10px;
+            right: 5px;
+        }
+
+        @keyframes pulseIndicator {
+            0% { transform: scale(0.8); opacity: 0; }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
         }
 
         /* Smaller life display for 3-4 players */
@@ -1613,6 +1654,10 @@
         let commanderDamageMode = false;
         let commanderDamageReceiver = null;
 
+        // Life change indicator tracking
+        let lifeChangeTimers = [null, null, null, null]; // Timers for each player
+        let lifeChangeAccumulator = [0, 0, 0, 0]; // Accumulated changes for each player
+
         // Initialize from localStorage
         function initApp() {
             const savedState = localStorage.getItem('mtgGameState');
@@ -1781,8 +1826,65 @@
         // Change life total
         function changeLife(playerIndex, amount) {
             gameState.players[playerIndex] += amount;
-            document.getElementById(`player${playerIndex+1}Life`).textContent = gameState.players[playerIndex];
+            const lifeElement = document.getElementById(`player${playerIndex+1}Life`);
+            lifeElement.textContent = gameState.players[playerIndex];
+            
+            // Update life change accumulator
+            lifeChangeAccumulator[playerIndex] += amount;
+            
+            // Clear existing timer for this player
+            if (lifeChangeTimers[playerIndex]) {
+                clearTimeout(lifeChangeTimers[playerIndex]);
+            }
+            
+            // Update or create the change indicator
+            updateLifeChangeIndicator(playerIndex);
+            
+            // Set timer to clear the indicator after 2 seconds of inactivity
+            lifeChangeTimers[playerIndex] = setTimeout(() => {
+                clearLifeChangeIndicator(playerIndex);
+            }, 2000);
+            
             saveState();
+        }
+
+        // Update the life change indicator display
+        function updateLifeChangeIndicator(playerIndex) {
+            const lifeElement = document.getElementById(`player${playerIndex+1}Life`);
+            let indicator = lifeElement.querySelector('.life-change-indicator');
+            
+            // Create indicator if it doesn't exist
+            if (!indicator) {
+                indicator = document.createElement('div');
+                indicator.className = 'life-change-indicator';
+                lifeElement.appendChild(indicator);
+            }
+            
+            // Update indicator content and style
+            const change = lifeChangeAccumulator[playerIndex];
+            const isPositive = change > 0;
+            
+            indicator.textContent = (isPositive ? '+' : '') + change;
+            indicator.className = 'life-change-indicator ' + (isPositive ? 'positive' : 'negative');
+            
+            // Trigger animation by removing and re-adding
+            indicator.style.animation = 'none';
+            setTimeout(() => {
+                indicator.style.animation = '';
+            }, 10);
+        }
+
+        // Clear the life change indicator
+        function clearLifeChangeIndicator(playerIndex) {
+            const lifeElement = document.getElementById(`player${playerIndex+1}Life`);
+            const indicator = lifeElement.querySelector('.life-change-indicator');
+            
+            if (indicator) {
+                indicator.remove();
+            }
+            
+            lifeChangeAccumulator[playerIndex] = 0;
+            lifeChangeTimers[playerIndex] = null;
         }
 
         // Reset individual player
@@ -1796,6 +1898,10 @@
                 gameState.commanderDamage[i][playerIndex] = 0;
             }
             document.getElementById(`player${playerIndex+1}Life`).textContent = defaultLife;
+            
+            // Clear life change indicator
+            clearLifeChangeIndicator(playerIndex);
+            
             renderPlayerCounters(playerIndex);
             if (commanderDamageMode) {
                 renderCommanderDamage();
@@ -1811,6 +1917,12 @@
             gameState.counters = gameState.counters.map(() => []); // Clear all counters
             gameState.commanderDamage = Array(gameState.playerCount).fill(null).map(() => Array(gameState.playerCount).fill(0));
             gameState.gameStartTime = Date.now();
+            
+            // Clear all life change indicators
+            for (let i = 0; i < gameState.playerCount; i++) {
+                clearLifeChangeIndicator(i);
+            }
+            
             closeCommanderMode(); // Exit commander mode
             updateAllLifeDisplays();
             renderAllCounters();
@@ -2660,7 +2772,7 @@
 
         // === SERVICE WORKER FOR UPDATES ===
         // App version - increment this when you make changes
-        const APP_VERSION = '1.14';
+        const APP_VERSION = '1.15';
 
         // Register service worker
         if ('serviceWorker' in navigator) {
