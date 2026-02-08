@@ -1145,6 +1145,109 @@
             color: var(--bg-primary);
         }
 
+        /* Player name editing */
+        .player-name-editable {
+            cursor: pointer;
+            padding: 2px 4px;
+            border-radius: 4px;
+            transition: background 0.2s ease;
+        }
+
+        .player-name-editable:hover {
+            background: rgba(212, 175, 55, 0.2);
+        }
+
+        .player-name-input {
+            background: var(--bg-primary);
+            border: 2px solid var(--accent-gold);
+            border-radius: 4px;
+            padding: 2px 4px;
+            color: var(--text-primary);
+            font-family: 'Cinzel', serif;
+            font-size: 1.2rem;
+            font-weight: 600;
+            width: 120px;
+            text-align: left;
+        }
+
+        .players-container.grid .player-name-input {
+            font-size: 0.8rem;
+            width: 80px;
+        }
+
+        .player-name-input:focus {
+            outline: none;
+            box-shadow: 0 0 10px var(--glow-gold);
+        }
+
+        /* 1P Commander damage modal */
+        .commander-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .commander-option {
+            background: var(--bg-primary);
+            border: 2px solid var(--text-secondary);
+            padding: 15px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .commander-name {
+            font-family: 'Cinzel', serif;
+            font-size: 1.1rem;
+            color: var(--accent-gold);
+        }
+
+        .commander-damage-controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .commander-damage-value {
+            font-family: 'Cinzel', serif;
+            font-size: 1.3rem;
+            color: var(--text-primary);
+            min-width: 40px;
+            text-align: center;
+        }
+
+        .commander-damage-btn {
+            background: var(--bg-accent);
+            border: 2px solid var(--text-secondary);
+            color: var(--text-primary);
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'Cinzel', serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .commander-damage-btn.increment {
+            background: linear-gradient(145deg, var(--accent-green), #3d6620);
+            border-color: #4d7630;
+        }
+
+        .commander-damage-btn.decrement {
+            background: linear-gradient(145deg, var(--accent-red), #a00000);
+            border-color: #b00000;
+        }
+
+        .commander-damage-btn:active {
+            transform: scale(0.95);
+        }
+
         @keyframes fadeIn {
             from {
                 opacity: 0;
@@ -1437,11 +1540,25 @@
         </div>
     </div>
 
+    <!-- 1P Commander Damage Modal -->
+    <div id="commanderDamageModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-title">Commander Damage</div>
+            <div class="commander-list" id="commanderList">
+                <!-- Dynamically populated -->
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-btn cancel" onclick="closeCommanderDamageModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Game state
         let gameState = {
             playerCount: 4,
             players: [40, 40, 40, 40],
+            playerNames: ['Player 1', 'Player 2', 'Player 3', 'Player 4'],
             counters: [[], [], [], []], // Additional counters for each player
             commanderDamage: [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]], // [receiver][dealer]
             gameStartTime: Date.now()
@@ -1474,10 +1591,15 @@
                 if (!gameState.commanderDamage) {
                     gameState.commanderDamage = Array(gameState.players.length).fill(null).map(() => Array(gameState.players.length).fill(0));
                 }
+                // Ensure player names array exists
+                if (!gameState.playerNames) {
+                    gameState.playerNames = Array(gameState.players.length).fill(null).map((_, i) => `Player ${i+1}`);
+                }
                 updatePlayerCountUI();
                 updateAllLifeDisplays();
                 renderAllCounters();
                 renderAllCommanderTotals();
+                updateAllPlayerNames();
             }
             updateStats();
             loadDecks();
@@ -1498,11 +1620,15 @@
             
             // If switching player counts, reset all life totals to default
             if (oldCount !== count) {
+                const oldNames = [...gameState.playerNames];
                 gameState.players = [];
                 gameState.counters = [];
+                gameState.playerNames = [];
                 for (let i = 0; i < count; i++) {
                     gameState.players.push(defaultLife);
                     gameState.counters.push([]);
+                    // Preserve old names if they exist
+                    gameState.playerNames.push(oldNames[i] || `Player ${i+1}`);
                 }
                 // Reset commander damage tracking
                 gameState.commanderDamage = Array(count).fill(null).map(() => Array(count).fill(0));
@@ -1593,6 +1719,7 @@
                         <button class="add-counter-btn" onclick="openCounterModal(3)">+ Counter</button>
                         <button class="commander-btn" onclick="openCommanderMode(3)">Commander</button>
                     `;
+                    updatePlayer4Name();
                 }
                 
                 player1.classList.add('rotate-90');  // Top-left
@@ -1603,6 +1730,7 @@
             
             updateAllLifeDisplays();
             renderAllCounters();
+            updateAllPlayerNames();
         }
 
         // Update all life displays
@@ -1653,6 +1781,68 @@
             renderAllCounters();
             renderAllCommanderTotals();
             saveState();
+        }
+
+        // Edit player name
+        function editPlayerName(playerIndex) {
+            const playerNameElement = document.querySelector(`#player${playerIndex+1}Card .player-name`);
+            const currentName = gameState.playerNames[playerIndex];
+            
+            // Create input element
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = currentName;
+            input.className = 'player-name-input';
+            input.maxLength = 20;
+            
+            // Replace name with input
+            playerNameElement.replaceWith(input);
+            input.focus();
+            input.select();
+            
+            // Save on blur or enter
+            const saveName = () => {
+                const newName = input.value.trim() || `Player ${playerIndex+1}`;
+                gameState.playerNames[playerIndex] = newName;
+                
+                // Create new span element
+                const span = document.createElement('span');
+                span.className = 'player-name player-name-editable';
+                span.textContent = newName;
+                span.onclick = () => editPlayerName(playerIndex);
+                
+                input.replaceWith(span);
+                saveState();
+            };
+            
+            input.addEventListener('blur', saveName);
+            input.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    input.blur();
+                }
+            });
+        }
+
+        // Update all player names
+        function updateAllPlayerNames() {
+            for (let i = 0; i < gameState.playerCount; i++) {
+                const playerNameElement = document.querySelector(`#player${i+1}Card .player-name`);
+                if (playerNameElement && !playerNameElement.classList.contains('player-name-input')) {
+                    playerNameElement.textContent = gameState.playerNames[i];
+                    playerNameElement.classList.add('player-name-editable');
+                    playerNameElement.onclick = () => editPlayerName(i);
+                }
+            }
+        }
+
+        // Update player name in dynamic player 4 card
+        function updatePlayer4Name() {
+            const player4NameElement = document.querySelector('#player4Card .player-name');
+            if (player4NameElement) {
+                player4NameElement.textContent = gameState.playerNames[3];
+                player4NameElement.classList.add('player-name-editable');
+                player4NameElement.onclick = () => editPlayerName(3);
+            }
         }
 
         // End game - show deck selection modal
@@ -1883,6 +2073,12 @@
 
         // Open commander damage mode
         function openCommanderMode(receiverIndex) {
+            // Special case: 1P mode opens modal instead
+            if (gameState.playerCount === 1) {
+                openCommanderDamageModal();
+                return;
+            }
+            
             if (commanderDamageMode && commanderDamageReceiver === receiverIndex) {
                 // Close commander mode if clicking same button
                 closeCommanderMode();
@@ -2002,6 +2198,46 @@
 
             renderCommanderDamage();
             renderAllCommanderTotals();
+        }
+
+        // Open 1P commander damage modal
+        function openCommanderDamageModal() {
+            const modal = document.getElementById('commanderDamageModal');
+            const commanderList = document.getElementById('commanderList');
+            
+            // Build list of commanders (players 2-4)
+            commanderList.innerHTML = '';
+            for (let i = 1; i < 4; i++) {
+                const damage = gameState.commanderDamage[0][i] || 0;
+                const commanderName = gameState.playerNames[i] || `Player ${i+1}`;
+                
+                const commanderOption = document.createElement('div');
+                commanderOption.className = 'commander-option';
+                commanderOption.innerHTML = `
+                    <div class="commander-name">${commanderName}</div>
+                    <div class="commander-damage-controls">
+                        <button class="commander-damage-btn decrement" onclick="adjust1PCommanderDamage(${i}, -1)">-</button>
+                        <div class="commander-damage-value" id="commander-damage-${i}">${damage}</div>
+                        <button class="commander-damage-btn increment" onclick="adjust1PCommanderDamage(${i}, 1)">+</button>
+                    </div>
+                `;
+                commanderList.appendChild(commanderOption);
+            }
+            
+            modal.classList.add('active');
+        }
+
+        // Close 1P commander damage modal
+        function closeCommanderDamageModal() {
+            document.getElementById('commanderDamageModal').classList.remove('active');
+            renderAllCommanderTotals();
+        }
+
+        // Adjust commander damage in 1P mode
+        function adjust1PCommanderDamage(dealerIndex, amount) {
+            gameState.commanderDamage[0][dealerIndex] = Math.max(0, (gameState.commanderDamage[0][dealerIndex] || 0) + amount);
+            document.getElementById(`commander-damage-${dealerIndex}`).textContent = gameState.commanderDamage[0][dealerIndex];
+            saveState();
         }
 
         // Increment commander damage (click to add, long press to subtract could be added)
