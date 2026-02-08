@@ -2384,6 +2384,10 @@
         function adjust1PCommanderDamage(dealerIndex, amount) {
             gameState.commanderDamage[0][dealerIndex] = Math.max(0, (gameState.commanderDamage[0][dealerIndex] || 0) + amount);
             document.getElementById(`commander-damage-${dealerIndex}`).textContent = gameState.commanderDamage[0][dealerIndex];
+            
+            // Adjust player's life (negative amount because receiving damage)
+            changeLife(0, -amount);
+            
             saveState();
         }
 
@@ -2394,6 +2398,9 @@
             // Increment damage
             gameState.commanderDamage[receiver][dealer] = (gameState.commanderDamage[receiver][dealer] || 0) + 1;
             
+            // Decrease receiver's life by 1
+            changeLife(receiver, -1);
+            
             renderCommanderDamage();
             renderAllCommanderTotals();
             saveState();
@@ -2403,6 +2410,10 @@
         function decrementCommanderDamage(receiver, dealer) {
             if (gameState.commanderDamage[receiver][dealer] > 0) {
                 gameState.commanderDamage[receiver][dealer]--;
+                
+                // Increase receiver's life by 1 (undoing the damage)
+                changeLife(receiver, 1);
+                
                 renderCommanderDamage();
                 renderAllCommanderTotals();
                 saveState();
@@ -2772,7 +2783,7 @@
 
         // === SERVICE WORKER FOR UPDATES ===
         // App version - increment this when you make changes
-        const APP_VERSION = '1.15';
+        const APP_VERSION = '1.16';
 
         // Register service worker
         if ('serviceWorker' in navigator) {
