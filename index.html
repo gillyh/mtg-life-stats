@@ -71,6 +71,33 @@
             text-align: center;
             padding: 8px 0;
             animation: fadeInDown 0.6s ease-out;
+            position: relative;
+        }
+
+        .force-update-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: var(--bg-accent);
+            border: 1px solid var(--text-secondary);
+            color: var(--text-secondary);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Crimson Pro', serif;
+        }
+
+        .force-update-btn:hover {
+            background: var(--accent-gold);
+            color: var(--bg-primary);
+            border-color: var(--accent-gold);
+            transform: scale(1.05);
+        }
+
+        .force-update-btn:active {
+            transform: scale(0.95);
         }
 
         h1 {
@@ -1420,6 +1447,7 @@
 <body>
     <div class="container">
         <header>
+            <button class="force-update-btn" onclick="forceUpdate()">Update</button>
             <h1>MTG LIFE</h1>
             <div class="subtitle">Counter & Statistics</div>
         </header>
@@ -2783,7 +2811,7 @@
 
         // === SERVICE WORKER FOR UPDATES ===
         // App version - increment this when you make changes
-        const APP_VERSION = '1.16';
+        const APP_VERSION = '1.17';
 
         // Register service worker
         if ('serviceWorker' in navigator) {
@@ -2792,18 +2820,26 @@
                     .then(registration => {
                         console.log('Service Worker registered:', registration);
                         
-                        // Check for updates every time the app loads
+                        // Check for updates immediately and every 10 seconds
                         registration.update();
+                        setInterval(() => {
+                            registration.update();
+                        }, 10000);
                         
                         // Listen for updates
                         registration.addEventListener('updatefound', () => {
                             const newWorker = registration.installing;
+                            console.log('New service worker found, installing...');
                             newWorker.addEventListener('statechange', () => {
-                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                    // New version available
-                                    if (confirm('New version available! Reload to update?')) {
+                                console.log('Service worker state:', newWorker.state);
+                                if (newWorker.state === 'installed') {
+                                    if (navigator.serviceWorker.controller) {
+                                        // New version available - force update
+                                        console.log('New version available, updating...');
                                         newWorker.postMessage({ type: 'SKIP_WAITING' });
-                                        window.location.reload();
+                                    } else {
+                                        // First install
+                                        console.log('Service worker installed for first time');
                                     }
                                 }
                             });
@@ -2812,8 +2848,13 @@
                     .catch(err => console.log('Service Worker registration failed:', err));
                 
                 // Reload page when new service worker takes control
+                let refreshing = false;
                 navigator.serviceWorker.addEventListener('controllerchange', () => {
-                    window.location.reload();
+                    if (!refreshing) {
+                        refreshing = true;
+                        console.log('Controller changed, reloading...');
+                        window.location.reload();
+                    }
                 });
             });
         }
@@ -2821,6 +2862,33 @@
         // Close version update modal
         function closeVersionModal() {
             document.getElementById('versionUpdateModal').classList.remove('active');
+        }
+
+        // Force update - clears cache and reloads
+        async function forceUpdate() {
+            if (confirm('This will clear the cache and reload the app to get the latest version. Continue?')) {
+                try {
+                    // Unregister all service workers
+                    if ('serviceWorker' in navigator) {
+                        const registrations = await navigator.serviceWorker.getRegistrations();
+                        for (let registration of registrations) {
+                            await registration.unregister();
+                        }
+                    }
+                    
+                    // Clear all caches
+                    if ('caches' in window) {
+                        const cacheNames = await caches.keys();
+                        await Promise.all(cacheNames.map(name => caches.delete(name)));
+                    }
+                    
+                    // Reload with cache bust
+                    window.location.reload(true);
+                } catch (err) {
+                    console.error('Force update failed:', err);
+                    alert('Update failed. Try closing and reopening the app.');
+                }
+            }
         }
 
         // Store and check app version

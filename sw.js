@@ -1,12 +1,12 @@
 // Service Worker for MTG Life Counter
 // Version should match APP_VERSION in the HTML file
-const CACHE_VERSION = 'v1.16';
+const CACHE_VERSION = 'v1.17';
 const CACHE_NAME = `mtg-life-counter-${CACHE_VERSION}`;
 
 // Files to cache
 const urlsToCache = [
   './',
-  './mtg-life-counter-v16.html',
+  './index.html',
   'https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:wght@300;400;600&display=swap'
 ];
 
