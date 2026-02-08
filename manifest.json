@@ -2,7 +2,7 @@
   "name": "MTG Life Counter",
   "short_name": "MTG Life",
   "description": "Magic: The Gathering Life Counter with deck tracking and statistics",
-  "start_url": "./mtg-life-counter-v13.html",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#0a0e1a",
   "theme_color": "#d4af37",
