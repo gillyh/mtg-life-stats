@@ -1090,6 +1090,12 @@
             border: 2px solid var(--text-secondary);
         }
 
+        .deck-color-dot.white { background: #f0e68c; }
+        .deck-color-dot.blue { background: #4169e1; }
+        .deck-color-dot.black { background: #2f2f2f; }
+        .deck-color-dot.red { background: #dc143c; }
+        .deck-color-dot.green { background: #228b22; }
+
         .deck-stats {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -1722,6 +1728,35 @@
         </div>
     </div>
 
+    <!-- Edit Deck Modal -->
+    <div id="editDeckModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-title">Edit Deck</div>
+            <div class="form-group">
+                <label class="form-label">Deck Name</label>
+                <input type="text" id="editDeckName" class="form-input" placeholder="Enter deck name..." required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Colors</label>
+                <div class="color-selector" id="editColorSelector">
+                    <div class="color-option white" data-color="white" onclick="toggleEditColor('white')"></div>
+                    <div class="color-option blue" data-color="blue" onclick="toggleEditColor('blue')"></div>
+                    <div class="color-option black" data-color="black" onclick="toggleEditColor('black')"></div>
+                    <div class="color-option red" data-color="red" onclick="toggleEditColor('red')"></div>
+                    <div class="color-option green" data-color="green" onclick="toggleEditColor('green')"></div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Notes (Optional)</label>
+                <input type="text" id="editDeckNotes" class="form-input" placeholder="Commander, strategy, etc...">
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-btn cancel" onclick="closeEditDeckModal()">Cancel</button>
+                <button class="modal-btn confirm" onclick="saveEditedDeck()">Save</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Game state
         let gameState = {
@@ -1738,6 +1773,10 @@
 
         // Selected colors for new deck
         let selectedColors = [];
+
+        // Edit deck state
+        let editingDeckId = null;
+        let editSelectedColors = [];
 
         // Counter modal state
         let currentPlayerForCounter = null;
@@ -2835,6 +2874,19 @@
             }
         }
 
+        // Toggle color selection in edit modal
+        function toggleEditColor(color) {
+            const colorElement = document.querySelector(`#editColorSelector .color-option[data-color="${color}"]`);
+            
+            if (editSelectedColors.includes(color)) {
+                editSelectedColors = editSelectedColors.filter(c => c !== color);
+                colorElement.classList.remove('selected');
+            } else {
+                editSelectedColors.push(color);
+                colorElement.classList.add('selected');
+            }
+        }
+
         // Add new deck
         function addDeck(event) {
             event.preventDefault();
@@ -2914,6 +2966,7 @@
                             </div>
                         </div>
                         <div class="deck-actions">
+                            <button class="deck-btn" onclick="openEditDeckModal('${deck.id}')">Edit</button>
                             <button class="deck-btn delete" onclick="deleteDeck('${deck.id}')">Delete</button>
                         </div>
                     </div>
@@ -2932,6 +2985,79 @@
             localStorage.setItem('mtgDecks', JSON.stringify(decks));
             
             loadDecks();
+        }
+
+        // Open edit deck modal
+        function openEditDeckModal(deckId) {
+            const decks = JSON.parse(localStorage.getItem('mtgDecks') || '[]');
+            const deck = decks.find(d => d.id === deckId);
+            
+            if (!deck) {
+                alert('Deck not found');
+                return;
+            }
+            
+            editingDeckId = deckId;
+            editSelectedColors = [...deck.colors];
+            
+            // Populate form
+            document.getElementById('editDeckName').value = deck.name;
+            document.getElementById('editDeckNotes').value = deck.notes || '';
+            
+            // Set selected colors
+            document.querySelectorAll('#editColorSelector .color-option').forEach(el => {
+                const color = el.getAttribute('data-color');
+                if (editSelectedColors.includes(color)) {
+                    el.classList.add('selected');
+                } else {
+                    el.classList.remove('selected');
+                }
+            });
+            
+            document.getElementById('editDeckModal').classList.add('active');
+        }
+
+        // Close edit deck modal
+        function closeEditDeckModal() {
+            document.getElementById('editDeckModal').classList.remove('active');
+            document.getElementById('editDeckName').value = '';
+            document.getElementById('editDeckNotes').value = '';
+            editSelectedColors = [];
+            editingDeckId = null;
+            document.querySelectorAll('#editColorSelector .color-option').forEach(el => {
+                el.classList.remove('selected');
+            });
+        }
+
+        // Save edited deck
+        function saveEditedDeck() {
+            const name = document.getElementById('editDeckName').value.trim();
+            const notes = document.getElementById('editDeckNotes').value.trim();
+            
+            if (!name) {
+                alert('Please enter a deck name');
+                return;
+            }
+            
+            let decks = JSON.parse(localStorage.getItem('mtgDecks') || '[]');
+            const deckIndex = decks.findIndex(d => d.id === editingDeckId);
+            
+            if (deckIndex === -1) {
+                alert('Deck not found');
+                return;
+            }
+            
+            // Update deck properties while preserving stats
+            decks[deckIndex].name = name;
+            decks[deckIndex].colors = [...editSelectedColors];
+            decks[deckIndex].notes = notes;
+            
+            localStorage.setItem('mtgDecks', JSON.stringify(decks));
+            
+            closeEditDeckModal();
+            loadDecks();
+            
+            alert('Deck updated successfully!');
         }
 
         // === VIEW SWITCHING ===
